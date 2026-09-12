@@ -8,9 +8,8 @@
 
 ## 현재 상태
 
-P0부터 P7까지 구현과 검증이 완료됐다. [v0.1.0 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/releases/tag/v0.1.0)는
-Linux AMD64 image, Python package, 의존성 inventory, 고지와 checksum을 제공한다. Public GHCR
-image의 manifest digest는 `sha256:8573c8dea619dac0d7d18656695698abdace5eea93d653c15558bb289fa0301c`다.
+P0부터 P7까지 구현과 검증이 완료됐다. 현재 GitHub Release, Python package와 Public GHCR
+image의 불변 참조 및 검증 상태는 [실행 환경](deployment.md)에서 관리한다.
 
 고정 계약의 원본과 해시는 [provenance.json](../contracts/observation/v1/provenance.json)에
 있다. 해당 사본은 로컬 생성기 저장소의 지정 commit에서 가져온 공개 합성 계약이다.
@@ -70,9 +69,10 @@ CI(Continuous Integration)는 P0의 저장소 검증을 수행하고 P1부터 �
 | 산출물 | 불변 레코드 모델, 원본 line 보관, schema validator와 의미 검사, 실행 상태 전이 |
 | 검증 사례 | 타입 및 field 오류, 중복 key, 비유한 수치, 좌표와 배열 shape, sensor 및 투입구 제약 |
 | 실행 검증 | Sequence 누락, 중복 및 역순, simulation 시각 감소, 같은 run 재접속과 정적 정보 불일치 |
-| 완료 조건 | 고정 계약 파일만으로 실행되는 계약 검사와 상태 전이 단위 테스트 통과 |
+| 완료 조건 | 설치 package와 고정 계약 사본을 사용하는 계약 검사 및 상태 전이 단위 테스트 통과 |
 
 계약 사본은 [계약 출처](../contracts/observation/v1/provenance.json)의 파일 해시와 대조한다.
+Package 내부 schema는 고정 계약 사본과 byte 단위로 대조하고 wheel 포함 여부를 검증한다.
 실행 identity나 scene 비교를 JSON(JavaScript Object Notation) 문자열의 key 순서에
 의존하지 않게 검증한다.
 
@@ -81,8 +81,8 @@ CI(Continuous Integration)는 P0의 저장소 검증을 수행하고 P1부터 �
 | 구분 | 내용 |
 | --- | --- |
 | 산출물 | 단일 producer 수신기, LF(Line Feed) 조립기, 재접속 처리, 기록 worker와 상태 보고 |
-| 전송 검증 | Packet 분할 및 병합, LF 포함 한도 경계, 불완전 line 폐기, 추가 연결 거부, 응답 byte 부재 |
-| 기록 검증 | Header부터 원본 byte 보존, 반복 header, byte 및 record 상한, queue 포화와 쓰기 실패 |
+| 전송 검증 | Packet 분할 및 병합, framing 오류 전 완료 prefix, LF 포함 한도, 추가 연결 거부, 응답 byte 부재 |
+| 기록 검증 | 원본 byte와 반복 header, byte 및 record 상한, queue 포화, 짧은 쓰기와 close 실패 |
 | 완료 조건 | 느린 renderer 및 저장 장치 상황에서도 제한된 메모리와 수신 진행 유지 |
 
 기록 기능은 유효한 레코드의 prefix를 보존하는지 검증한다. 한도 도달 또는 queue 포화 뒤에도
@@ -107,7 +107,7 @@ live 상태가 갱신되는지 확인하며 부분 line과 무효 레코드가 �
 | --- | --- |
 | 산출물 | Live CLI, preview 경로, 최신 프레임 저장소와 브라우저 화면 |
 | 상태 검증 | 프레임 준비 전 상태, 최신 frame revision, 수신 및 렌더링 sequence, 누락과 마지막 정상 시각 |
-| 격리 검증 | 연결되지 않은 browser, 느린 browser, 요청 상한, 렌더링 지연 중 수신 진행 |
+| 격리 검증 | 연결되지 않은 browser, 느린 browser, 요청 상한, 최신 pending 1개와 수신 진행 |
 | 연결 검증 | 추가 관찰 없는 disconnect overlay 갱신, 재접속, 새 실행에서 이전 표면 제거 |
 | 완료 조건 | 실제 TCP 및 HTTP 경계의 통합 검사와 live 인자 오류 검사 통과 |
 

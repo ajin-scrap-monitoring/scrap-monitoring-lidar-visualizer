@@ -15,15 +15,6 @@ RUN uv sync --frozen --no-dev --no-editable
 
 FROM ${PYTHON_IMAGE} AS runtime
 
-ARG BUILD_REVISION=unknown
-ARG BUILD_VERSION=0.1.0
-
-LABEL org.opencontainers.image.description="Headless 3D visualizer for Scrap Monitoring LiDAR observations" \
-      org.opencontainers.image.revision="${BUILD_REVISION}" \
-      org.opencontainers.image.source="https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer" \
-      org.opencontainers.image.title="Scrap Monitoring LiDAR Visualizer" \
-      org.opencontainers.image.version="${BUILD_VERSION}"
-
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ffmpeg=7:5.1.9-0+deb12u1 \
@@ -37,6 +28,15 @@ RUN groupadd --gid 10001 visualizer \
 
 COPY --from=builder --chown=visualizer:visualizer /app /app
 COPY --chown=visualizer:visualizer THIRD_PARTY_NOTICES.md /app/THIRD_PARTY_NOTICES.md
+
+ARG BUILD_REVISION=unknown
+ARG BUILD_VERSION=0.1.1
+
+LABEL org.opencontainers.image.description="Headless 3D visualizer for Scrap Monitoring LiDAR observations" \
+      org.opencontainers.image.revision="${BUILD_REVISION}" \
+      org.opencontainers.image.source="https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer" \
+      org.opencontainers.image.title="Scrap Monitoring LiDAR Visualizer" \
+      org.opencontainers.image.version="${BUILD_VERSION}"
 
 ENV HOME=/tmp \
     LIBGL_ALWAYS_SOFTWARE=1 \

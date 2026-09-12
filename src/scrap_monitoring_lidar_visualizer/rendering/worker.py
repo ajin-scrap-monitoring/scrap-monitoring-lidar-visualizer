@@ -93,6 +93,7 @@ class LatestRenderWorker:
         )
         self._frames = frames
         self._generation = 0
+        self._inflight = False
         self._pending: tuple[int, RenderRequest] | None = None
         self.last_error: str | None = None
 
@@ -108,28 +109,19 @@ class LatestRenderWorker:
         self._flush_pending()
 
     def _flush_pending(self) -> None:
-        if self._pending is None:
+        if self._pending is None or self._inflight:
             return
         try:
             self._requests.put_nowait(self._pending)
         except Full:
             return
+        self._inflight = True
         self._pending = None
 
     def invalidate(self) -> None:
         self._generation += 1
         self._pending = None
         self.last_error = None
-        while True:
-            try:
-                self._requests.get_nowait()
-            except Empty:
-                break
-        while True:
-            try:
-                self._outcomes.get_nowait()
-            except Empty:
-                break
 
     def poll(self) -> RenderOutcome | None:
         latest: RenderOutcome | None = None
@@ -138,6 +130,7 @@ class LatestRenderWorker:
                 latest = self._outcomes.get_nowait()
             except Empty:
                 break
+            self._inflight = False
         self._flush_pending()
         if latest is None or latest.generation != self._generation:
             return None
@@ -150,18 +143,8 @@ class LatestRenderWorker:
 
     def close(self, timeout_s: float = 5.0) -> None:
         self._pending = None
-        while True:
-            try:
-                self._requests.get_nowait()
-            except Empty:
-                break
-        while True:
-            try:
-                self._outcomes.get_nowait()
-            except Empty:
-                break
         try:
-            self._requests.put_nowait(None)
+            self._requests.put(None, timeout=timeout_s)
         except Full:
             pass
         self._process.join(timeout_s)

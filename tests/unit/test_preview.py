@@ -68,6 +68,7 @@ def test_renderer_invalidation_discards_previous_run_outcome() -> None:
     worker = LatestRenderWorker.__new__(LatestRenderWorker)
     worker._frames = frames
     worker._generation = 2
+    worker._inflight = True
     worker._requests = Queue[Any]()
     worker._outcomes = Queue[Any]()
     worker._pending = None
@@ -89,23 +90,36 @@ def test_renderer_invalidation_discards_previous_run_outcome() -> None:
     assert worker.last_error is None
 
 
-def test_renderer_keeps_latest_pending_request_when_mailbox_is_full() -> None:
+def test_renderer_sends_latest_pending_request_after_inflight_finishes() -> None:
     frames = LatestFrameStore()
     worker = LatestRenderWorker.__new__(LatestRenderWorker)
     worker._frames = frames
     worker._generation = 0
+    worker._inflight = True
     worker._requests = Queue[Any](maxsize=1)
     worker._outcomes = Queue[Any]()
     worker._pending = None
     worker.last_error = None
-    worker._requests.put((0, "old"))
-
+    worker.submit("waiting")
     worker.submit("latest")
 
-    assert worker._requests.get_nowait() == (0, "old")
     assert worker._pending == (0, "latest")
     assert worker.poll() is None
+    assert worker._pending == (0, "latest")
+    worker._outcomes.put(
+        RenderOutcome(
+            generation=0,
+            run_id="old-run",
+            sequence=1,
+            png=None,
+            error="old renderer error",
+        )
+    )
+
+    assert worker.poll() is not None
     assert worker._requests.get_nowait() == (0, "latest")
+    assert worker._pending is None
+    assert worker._inflight is True
 
 
 def test_preview_http_endpoints_return_latest_frame() -> None:
