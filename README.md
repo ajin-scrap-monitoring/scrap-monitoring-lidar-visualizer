@@ -15,15 +15,13 @@ LiDAR(Light Detection and Ranging) 적재 모델 관찰 데이터를 서버에�
 
 ## 에이전트 디렉토리
 
-에이전트 구성은 정본 1개와 심링크 3개다.
+에이전트 구성은 정본 1개와 현재 사용하는 Codex 심링크 1개다. 다른 도구의 진입점은 해당
+도구를 실제로 사용할 때 추가한다.
 
 ```text
 .agents/
   AGENTS.md
-.claude/
-  CLAUDE.md -> ../.agents/AGENTS.md
 AGENTS.md -> .agents/AGENTS.md
-GEMINI.md -> .agents/AGENTS.md
 ```
 
 ## 이용 조건
