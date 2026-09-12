@@ -8,9 +8,10 @@
 
 ## 현재 상태
 
-현재 작업은 [이슈 #1](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/issues/1)이다.
-에이전트 지침 구조, 설계 문서, 계약 사본과 운영 산출물 제외 설정이 준비되어 있다.
-애플리케이션 코드, 의존성 lockfile, 자동 검사 workflow와 컨테이너 이미지는 아직 없다.
+기준 구성의 검증 작업은 [이슈 #5](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/issues/5)에서 관리한다.
+에이전트 지침 구조, 설계 문서, 계약 사본과 운영 산출물 제외 설정이 있다. 저장소 검사
+workflow와 검증 도구의 의존성 고정 파일은 [검증 환경](dependencies.md)을 따른다.
+애플리케이션 코드와 컨테이너 이미지는 아직 없다.
 
 고정 계약의 원본과 해시는 [provenance.json](../contracts/observation/v1/provenance.json)에
 있다. 해당 사본은 로컬 생성기 저장소의 지정 commit에서 가져온 공개 합성 계약이다.
@@ -41,7 +42,7 @@ FFmpeg 조합은 CPU(Central Processing Unit)만 사용하는 대상 컨테이�
 
 | 구분 | 내용 |
 | --- | --- |
-| 산출물 | 에이전트 정본과 심링크, 문서 진입점, 설계와 계획, 계약 사본 및 출처, `.gitignore` |
+| 산출물 | 에이전트 정본과 진입점, 문서, 계약 사본 및 출처, `.gitignore`, 저장소 및 릴리스 규칙 검사 |
 | 완료 조건 | 심링크 검사, 명세 원본 보존, 계약 byte 일치 및 schema 검증, 문서 링크 및 형식 검사 |
 
 ## P1. 실행 환경과 headless 렌더링 검증
@@ -58,7 +59,7 @@ FFmpeg 조합은 CPU(Central Processing Unit)만 사용하는 대상 컨테이�
 개발 검사 도구는 Ruff, mypy, pytest, rumdl의 4개다. 각 도구의 역할은 코드 lint 및 형식,
 타입 검사, 자동 테스트, Markdown 검사다. 사용 버전은 lockfile과 의존성 문서에 기록한다.
 
-CI(Continuous Integration)는 P1부터 구성하고 구현 단계마다 필요한 검증을 추가한다.
+CI(Continuous Integration)는 P0의 저장소 검증을 수행하고 P1부터 애플리케이션 검증을 추가한다.
 공통 job 및 실행 조건과 CodeQL 설정 순서는 조직의
 [CI 및 보호 규칙](https://github.com/ajin-scrap-monitoring/.github/blob/main/rulesets/README.md)을
 따른다. 에이전트 심링크 검사는 사용자 홈의 도구 설치에 의존하지 않도록 workflow에서
@@ -141,6 +142,9 @@ pixel 값을 동일성 기준으로 사용하지 않는다.
 
 Release와 Package 게시 시점은 조직 운영 절차를 따른다. 실제 장비 주소, 자격 증명과
 배포 Repository의 환경값은 외부 설정으로 제공한다.
+
+현재 tag 실행은 형식과 원격 `main` 이력 및 저장소 검증만 수행한다. 이미지 빌드와
+Release asset 게시는 P7의 구현 대상이다.
 
 ## 요구사항 검증 대응
 
