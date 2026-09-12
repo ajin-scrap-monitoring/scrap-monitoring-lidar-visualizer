@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-generator",
+  "commit": "bbf359391daff8a5c547ab341782c19a03ca0356",
+  "path": "contracts/observation/v1",
+  "files": {
+    "header.schema.json": {
+      "sha256": "dfdd275ddebe80fcb4da767ab576bbde9cc2989cfd71668e31a314f411094ee3"
+    },
+    "observation.schema.json": {
+      "sha256": "0367681da1fd973154e8d6faff080eeb279ad87290d0b908e4354b0890c80303"
+    },
+    "fixtures/observation.v1.jsonl": {
+      "sha256": "f0af480ebcc6562ba77f977f68b9fe0edd80749ee5dcbd28c3328606e8d94953"
+    }
+  }
+}
