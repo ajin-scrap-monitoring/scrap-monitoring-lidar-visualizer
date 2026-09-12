@@ -59,8 +59,12 @@ readonly benchmark_json
 test "$(jq -r '.grid_points' <<<"${benchmark_json}")" = "262144"
 printf '%s\n' "${benchmark_json}"
 
-ffprobe -v error \
+docker run "${runtime_options[@]}" \
+  --mount "type=bind,source=${probe_root}/output,target=/output,readonly" \
+  --entrypoint ffprobe \
+  "${image}" \
+  -v error \
   -select_streams v:0 \
   -show_entries stream=codec_name,width,height \
   -of default=noprint_wrappers=1 \
-  "${probe_root}/output/probe/probe.mp4"
+  /output/probe/probe.mp4
