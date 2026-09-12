@@ -101,17 +101,13 @@ digest를 전체 컨테이너 검사에 사용한다. Package 공개 범위를 �
 archive, image digest, release metadata, 의존성 inventory, 고지와 SHA-256 checksum을 draft
 Release에 올리고 최종 게시한다.
 
-[v0.1.0 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/releases/tag/v0.1.0)는
-source commit `866e3f1e2c9fa997879b9ad3659e168ab9259147`에서 생성됐다. Release asset 7개의
-SHA-256 checksum, Python package metadata, SLSA(Supply-chain Levels for Software Artifacts)
-provenance와 SPDX(Software Package Data Exchange) 2.3 SBOM을 검증했다. Package는 Public이며
-인증 정보가 없는 Docker 설정으로 digest image를 가져올 수 있다.
+[v0.1.1 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/releases/tag/v0.1.1)는
+source commit `2657f59d07d8ba383b59bdcf539434d2b3188d81`에서 생성됐다. Release asset 7개의
+SHA-256 checksum, 설치 wheel의 계약 parsing, SLSA(Supply-chain Levels for Software
+Artifacts) provenance와 SPDX(Software Package Data Exchange) 2.3 SBOM을 검증했다.
+Package는 Public이며 인증 정보가 없는 Docker 설정으로 digest image를 가져올 수 있다.
 
-현재 배포 image는 다음 불변 참조를 사용한다.
-
-```text
-ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:8573c8dea619dac0d7d18656695698abdace5eea93d653c15558bb289fa0301c
-```
+현재 배포 image는 불변 digest로 실행한다.
 
 ```bash
 docker run --rm \
@@ -122,7 +118,7 @@ docker run --rm \
   --tmpfs /tmp:rw,noexec,nosuid,size=64m \
   --publish 7000:7000 \
   --publish 8000:8000 \
-  ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:8573c8dea619dac0d7d18656695698abdace5eea93d653c15558bb289fa0301c \
+  ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:ca1a46adc8e0a4bea927c212f175e864d153aba48a1a14eef87cb070f16b3139 \
   live \
   --tcp-host 0.0.0.0 \
   --tcp-port 7000 \
@@ -155,5 +151,5 @@ docker run --rm \
 | 격자 node 825개 | 640 x 360, 10 frame | 0.580초 | 367.535 MiB |
 | 격자 node 262,144개 | 640 x 360, 1 frame | 0.575초 | 457.273 MiB |
 
-현재 image 크기는 395.350 MiB다. 측정값은 성능 보장이 아니라 동일 상한에서 회귀를 비교하기
+현재 image 크기는 395.351 MiB다. 측정값은 성능 보장이 아니라 동일 상한에서 회귀를 비교하기
 위한 기준이다.
