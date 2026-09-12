@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly image="scrap-monitoring-lidar-visualizer:p1"
+readonly image="scrap-monitoring-lidar-visualizer:test"
 probe_root="$(mktemp -d)"
 readonly probe_root
 
@@ -51,6 +51,13 @@ docker run "${runtime_options[@]}" \
   -m scrap_monitoring_lidar_visualizer.live_probe \
   --output /output/live
 
+docker run "${runtime_options[@]}" \
+  --mount "type=bind,source=${probe_root}/output,target=/output" \
+  --entrypoint python \
+  "${image}" \
+  -m scrap_monitoring_lidar_visualizer.replay_probe \
+  --output /output/replay
+
 test "$(jq -r '.display_present' "${probe_root}/output/probe/probe.json")" = "false"
 test "$(jq -r '.euid' "${probe_root}/output/probe/probe.json")" = "10001"
 test "$(jq -r '.gpu_device_present' "${probe_root}/output/probe/probe.json")" = "false"
@@ -77,6 +84,16 @@ test "$(jq -r '.root_has_preview' "${probe_root}/output/live/live.json")" = "tru
 test "$(jq -r '.received_sequence' "${probe_root}/output/live/live.json")" = "1"
 test "$(jq -r '.rendered_sequence' "${probe_root}/output/live/live.json")" = "1"
 test -s "${probe_root}/output/live/live.png"
+test "$(jq -r '.video_exists' "${probe_root}/output/replay/replay.json")" = "true"
+test "$(jq -r '.root_status' "${probe_root}/output/replay/replay.json")" = "200"
+test "$(jq -r '.root_has_preview' "${probe_root}/output/replay/replay.json")" = "true"
+test "$(jq -r '.frame_status' "${probe_root}/output/replay/replay.json")" = "200"
+test "$(jq -r '.status_code' "${probe_root}/output/replay/replay.json")" = "200"
+test "$(jq -r '.playback_complete' "${probe_root}/output/replay/replay.json")" = "true"
+test "$(jq -r '.playback_frame_count' "${probe_root}/output/replay/replay.json")" = "2"
+test "$(jq -r '.rendered_sequence' "${probe_root}/output/replay/replay.json")" = "1"
+test -s "${probe_root}/output/replay/replay-preview.png"
+test -s "${probe_root}/output/replay/replay.mp4"
 
 benchmark_json="$(
   docker run "${runtime_options[@]}" \
@@ -99,3 +116,14 @@ docker run "${runtime_options[@]}" \
   -show_entries stream=codec_name,width,height \
   -of default=noprint_wrappers=1 \
   /output/probe/probe.mp4
+
+docker run "${runtime_options[@]}" \
+  --mount "type=bind,source=${probe_root}/output,target=/output,readonly" \
+  --entrypoint ffprobe \
+  "${image}" \
+  -v error \
+  -count_frames \
+  -select_streams v:0 \
+  -show_entries stream=codec_name,width,height,nb_read_frames \
+  -of default=noprint_wrappers=1 \
+  /output/replay/replay.mp4

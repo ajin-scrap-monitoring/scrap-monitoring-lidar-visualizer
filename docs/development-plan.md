@@ -8,10 +8,10 @@
 
 ## 현재 상태
 
-P5 Live CLI와 HTTP preview 통합은
-[이슈 #15](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/issues/15)에서 관리한다.
-TCP 수신, 제한된 기록, 최신 snapshot rendering과 browser preview가 하나의 실행 수명으로
-연결된다. 기록 재생과 제품 MP4 출력은 아직 없다.
+P6 기록 재생과 MP4 출력은
+[이슈 #17](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/issues/17)에서 관리한다.
+TCP 수신, 제한된 기록, 최신 live snapshot과 기록 재생이 browser preview에 연결되며,
+선택한 실행과 simulation 구간을 H.264 MP4로 출력한다. 최종 image와 Release는 아직 없다.
 
 고정 계약의 원본과 해시는 [provenance.json](../contracts/observation/v1/provenance.json)에
 있다. 해당 사본은 로컬 생성기 저장소의 지정 commit에서 가져온 공개 합성 계약이다.
@@ -31,11 +31,11 @@ Schema가 표현하지 않는 조건과 명세의 추가 수신 및 preview 요�
 | P3 | TCP(Transmission Control Protocol) 수신과 제한된 원본 기록 | P2 | 완료 |
 | P4 | 결정론적인 mesh와 장면 렌더링 | P1, P2 | 완료 |
 | P5 | Live CLI(Command-Line Interface)와 HTTP(Hypertext Transfer Protocol) preview 통합 | P3, P4 | 완료 |
-| P6 | 기록 재생과 MP4 출력 | P3, P4, P5 | 미착수 |
+| P6 | 기록 재생과 MP4 출력 | P3, P4, P5 | 완료 |
 | P7 | 컨테이너 및 릴리스 검증 | P5, P6 | 미착수 |
 
-다음 구현 작업은 P6다. 기록의 실행 및 시간 구간을 선택해 browser에서 재생하거나 MP4로
-출력한다. P1에서 고정한 Python, OSMesa와 FFmpeg 조합 및 자원 기준은
+다음 구현 작업은 P7이다. 최종 container 실행 경계, 릴리스 workflow, 배포 산출물과
+의존성 고지를 검증한다. P1에서 고정한 Python, OSMesa와 FFmpeg 조합 및 자원 기준은
 [실행 환경](deployment.md)을 따른다.
 
 ## P0. 프로젝트 기준 구성

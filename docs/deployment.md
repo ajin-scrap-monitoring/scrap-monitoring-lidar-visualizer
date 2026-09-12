@@ -2,10 +2,10 @@
 
 ## 현재 산출물
 
-현재 package는 TCP 수신, 제한된 기록, 렌더링 자식 process와 HTTP preview를 연결하는
-`lidar-visualizer live` CLI를 제공한다. Container 검증은 실제 loopback TCP 입력을 제품
-renderer에 전달하고 HTTP 화면, 상태와 최신 PNG 응답을 확인한다. 최종 image entrypoint와
-port 선언은 P7에서 적용한다.
+현재 package는 TCP 수신, 제한된 기록, 기록 재생, 렌더링 자식 process, HTTP preview와
+H.264 MP4 출력을 연결하는 `lidar-visualizer` CLI를 제공한다. Container 검증은 실제
+loopback TCP 입력, live 및 replay HTTP 응답, 제품 PNG와 ffprobe 영상 구조를 확인한다.
+최종 image entrypoint와 port 선언은 P7에서 적용한다.
 
 Container는 Linux AMD64에서 UID와 GID 10001인 비root 사용자로 실행한다. Root filesystem은
 read-only이고 `/tmp`와 `/output`만 writable 경로다. Runtime probe는 `DISPLAY` 환경 변수,
@@ -40,6 +40,32 @@ Browser는 `/`에서 화면, `/frame.png`에서 최신 frame, `/status`에서 �
 조회한다. HTTP 경계에는 인증과 TLS(Transport Layer Security)가 없으므로 제한된 개발
 network에서만 노출한다.
 
+## Replay 실행
+
+단일 실행 기록은 `--run-id` 없이 MP4로 출력할 수 있다. 여러 실행이 포함된 기록은
+`--run-id`를 지정한다.
+
+```bash
+uv run lidar-visualizer replay observations.jsonl \
+  --output replay.mp4 \
+  --start 10 \
+  --end 40 \
+  --time-scale 2 \
+  --fps 10
+```
+
+같은 HTTP 경계에서 기록을 재생한다.
+
+```bash
+uv run lidar-visualizer replay observations.jsonl \
+  --http-host 127.0.0.1 \
+  --http-port 8000 \
+  --duration 30
+```
+
+`--duration`과 `--time-scale`은 함께 지정하지 않는다. MP4는 기존 파일을 덮어쓰지 않으며
+같은 출력 directory의 부분 파일을 FFmpeg 및 ffprobe 검증 뒤 최종 경로에 연결한다.
+
 ## 빌드와 검증
 
 저장소 루트에서 image를 빌드한다.
@@ -47,7 +73,7 @@ network에서만 노출한다.
 ```bash
 docker build \
   --platform linux/amd64 \
-  --tag scrap-monitoring-lidar-visualizer:p1 \
+  --tag scrap-monitoring-lidar-visualizer:test \
   .
 ```
 

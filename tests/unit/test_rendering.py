@@ -63,6 +63,7 @@ def test_scene_description_contains_required_overlay_and_camera(
         config=RenderConfig(camera="top"),
         connected=False,
         missing_sequences=3,
+        connection_label="replay",
     )
 
     assert isometric.camera_position != top.camera_position
@@ -70,6 +71,7 @@ def test_scene_description_contains_required_overlay_and_camera(
     assert "sequence: 1" in isometric.overlay
     assert "connection: connected" in isometric.overlay
     assert "missing_sequences: 3" in top.overlay
+    assert "connection: replay" in top.overlay
 
 
 def test_collecting_scene_has_no_active_inlet(
