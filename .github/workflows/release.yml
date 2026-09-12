@@ -1,0 +1,297 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
+        with:
+          python-version: "3.14.7"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          version: "0.12.13"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Validate release target
+        id: release
+        shell: bash
+        run: |
+          git fetch --no-tags origin main
+          uv run --frozen python tools/check_release.py \
+            --tag "$GITHUB_REF_NAME" \
+            --revision "$GITHUB_SHA"
+          version="${GITHUB_REF_NAME#v}"
+          image_name="ghcr.io/${GITHUB_REPOSITORY,,}"
+          {
+            echo "image_name=$image_name"
+            echo "revision_ref=$image_name:sha-$GITHUB_SHA"
+            echo "version=$version"
+            echo "version_ref=$image_name:$version"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Validate source
+        run: |
+          uv run --frozen rumdl check --no-config --no-cache --disable MD013 .
+          uv run --frozen python tools/check_repository.py
+          uv run --frozen ruff format --check src tests tools
+          uv run --frozen ruff check src tests tools
+          uv run --frozen mypy
+          uv run --frozen python -m pytest
+          uv run --frozen python -m compileall -q src tests tools
+
+      - name: Build Python package
+        run: uv build --no-sources
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@37fe631027851001ddb9b187196cc803df7f5f0e # v4.3.0
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check existing image tags
+        id: existing
+        env:
+          REVISION_REF: ${{ steps.release.outputs.revision_ref }}
+          VERSION_REF: ${{ steps.release.outputs.version_ref }}
+        shell: bash
+        run: |
+          version_digest="$(
+            docker buildx imagetools inspect "$VERSION_REF" \
+              --format '{{.Manifest.Digest}}' 2>/dev/null || true
+          )"
+          revision_digest="$(
+            docker buildx imagetools inspect "$REVISION_REF" \
+              --format '{{.Manifest.Digest}}' 2>/dev/null || true
+          )"
+          if [[ -z "$version_digest" && -z "$revision_digest" ]]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          elif [[ "$version_digest" =~ ^sha256:[0-9a-f]{64}$ && \
+                  "$version_digest" == "$revision_digest" ]]; then
+            echo "digest=$version_digest" >> "$GITHUB_OUTPUT"
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "release image tags are incomplete or inconsistent" >&2
+            exit 1
+          fi
+
+      - name: Build and publish OCI image
+        if: steps.existing.outputs.publish == 'true'
+        id: publish
+        uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ steps.release.outputs.version_ref }}
+            ${{ steps.release.outputs.revision_ref }}
+          build-args: |
+            BUILD_REVISION=${{ github.sha }}
+            BUILD_VERSION=${{ steps.release.outputs.version }}
+          labels: |
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.release.outputs.version }}
+          provenance: mode=max
+          sbom: true
+
+      - name: Resolve and verify OCI image
+        id: image
+        env:
+          EXISTING_DIGEST: ${{ steps.existing.outputs.digest }}
+          IMAGE_NAME: ${{ steps.release.outputs.image_name }}
+          PUBLISHED_DIGEST: ${{ steps.publish.outputs.digest }}
+          REVISION_REF: ${{ steps.release.outputs.revision_ref }}
+          VERSION: ${{ steps.release.outputs.version }}
+          VERSION_REF: ${{ steps.release.outputs.version_ref }}
+        shell: bash
+        run: |
+          digest="${PUBLISHED_DIGEST:-$EXISTING_DIGEST}"
+          version_digest="$(
+            docker buildx imagetools inspect "$VERSION_REF" \
+              --format '{{.Manifest.Digest}}'
+          )"
+          revision_digest="$(
+            docker buildx imagetools inspect "$REVISION_REF" \
+              --format '{{.Manifest.Digest}}'
+          )"
+          if [[ ! "$digest" =~ ^sha256:[0-9a-f]{64}$ || \
+                "$digest" != "$version_digest" || \
+                "$digest" != "$revision_digest" ]]; then
+            echo "release image tags do not resolve to one valid digest" >&2
+            exit 1
+          fi
+          manifest_path="$RUNNER_TEMP/release-manifest.json"
+          docker buildx imagetools inspect --raw "$IMAGE_NAME@$digest" \
+            > "$manifest_path"
+          python - "$manifest_path" <<'PY'
+          import json
+          import sys
+
+          with open(sys.argv[1], encoding="utf-8") as source:
+              manifest = json.load(source)
+          runnable_platforms = {
+              (
+                  entry.get("platform", {}).get("os"),
+                  entry.get("platform", {}).get("architecture"),
+              )
+              for entry in manifest.get("manifests", ())
+              if entry.get("platform", {}).get("os") != "unknown"
+          }
+          expected = {("linux", "amd64")}
+          if runnable_platforms != expected:
+              raise SystemExit(
+                  f"release manifest platforms must be {sorted(expected)}: "
+                  f"observed {sorted(runnable_platforms)}"
+              )
+          PY
+          docker pull "$IMAGE_NAME@$digest"
+          image_version="$(
+            docker image inspect "$IMAGE_NAME@$digest" \
+              --format '{{index .Config.Labels "org.opencontainers.image.version"}}'
+          )"
+          image_revision="$(
+            docker image inspect "$IMAGE_NAME@$digest" \
+              --format '{{index .Config.Labels "org.opencontainers.image.revision"}}'
+          )"
+          if [[ "$image_version" != "$VERSION" || \
+                "$image_revision" != "$GITHUB_SHA" ]]; then
+            echo "release image labels do not match the release target" >&2
+            exit 1
+          fi
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Validate published OCI image
+        env:
+          IMAGE_UNDER_TEST: ${{ steps.release.outputs.image_name }}@${{ steps.image.outputs.digest }}
+          SKIP_IMAGE_BUILD: "true"
+        run: scripts/check-headless-container.sh
+
+      - name: Verify public package visibility
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE_NAME: ${{ steps.release.outputs.image_name }}
+        shell: bash
+        run: |
+          package_name="${IMAGE_NAME##*/}"
+          visibility=""
+          for _ in 1 2 3 4 5; do
+            visibility="$(
+              gh api "/orgs/$GITHUB_REPOSITORY_OWNER/packages/container/$package_name" \
+                --jq .visibility 2>/dev/null || true
+            )"
+            if [[ "$visibility" == "public" ]]; then
+              break
+            fi
+            sleep 5
+          done
+          if [[ "$visibility" != "public" ]]; then
+            echo "GHCR package visibility is not public: ${visibility:-unavailable}" >&2
+            exit 1
+          fi
+
+      - name: Assemble release assets
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+          IMAGE_NAME: ${{ steps.release.outputs.image_name }}
+          REVISION_REF: ${{ steps.release.outputs.revision_ref }}
+          VERSION: ${{ steps.release.outputs.version }}
+          VERSION_REF: ${{ steps.release.outputs.version_ref }}
+        shell: bash
+        run: |
+          mkdir release
+          cp dist/*.whl dist/*.tar.gz release/
+          cp THIRD_PARTY_NOTICES.md release/
+          docker run --rm \
+            --platform linux/amd64 \
+            --network none \
+            --read-only \
+            --cap-drop ALL \
+            --security-opt no-new-privileges \
+            --entrypoint python \
+            "$IMAGE_NAME@$IMAGE_DIGEST" \
+            -m scrap_monitoring_lidar_visualizer.dependency_audit \
+            > release/dependency-inventory.json
+          printf '%s@%s\n' "$IMAGE_NAME" "$IMAGE_DIGEST" \
+            > release/oci-image.txt
+          jq -n \
+            --arg digest "$IMAGE_DIGEST" \
+            --arg image "$IMAGE_NAME" \
+            --arg revision_ref "$REVISION_REF" \
+            --arg source_commit "$GITHUB_SHA" \
+            --arg version "$VERSION" \
+            --arg version_ref "$VERSION_REF" \
+            '{digest: $digest, image: $image, platform: "linux/amd64", revision_ref: $revision_ref, source_commit: $source_commit, version: $version, version_ref: $version_ref}' \
+            > release/release-metadata.json
+          (
+            cd release
+            sha256sum \
+              THIRD_PARTY_NOTICES.md \
+              dependency-inventory.json \
+              oci-image.txt \
+              release-metadata.json \
+              scrap_monitoring_lidar_visualizer-*.tar.gz \
+              scrap_monitoring_lidar_visualizer-*.whl \
+              > SHA256SUMS
+          )
+          cat > "$RUNNER_TEMP/release-notes.md" <<EOF
+          Scrap Monitoring LiDAR Visualizer $VERSION
+
+          Container image: $IMAGE_NAME
+          Manifest digest: $IMAGE_DIGEST
+          Deployment reference: $IMAGE_NAME@$IMAGE_DIGEST
+          Source commit: $GITHUB_SHA
+          EOF
+
+      - name: Publish immutable GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          state="$(
+            gh release view "$GITHUB_REF_NAME" \
+              --json isDraft \
+              --jq 'if .isDraft then "draft" else "published" end' \
+              2>/dev/null || true
+          )"
+          if [[ "$state" == "published" ]]; then
+            exit 0
+          fi
+          if [[ "$state" == "draft" ]]; then
+            gh release upload "$GITHUB_REF_NAME" release/* --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" release/* \
+              --draft \
+              --title "$GITHUB_REF_NAME" \
+              --verify-tag \
+              --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
+          gh release edit "$GITHUB_REF_NAME" --draft=false --latest

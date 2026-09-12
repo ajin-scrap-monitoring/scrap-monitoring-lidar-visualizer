@@ -7,7 +7,7 @@
 
 ## 모듈 경계
 
-프로그램은 `src/scrap_monitoring_lidar_visualizer/` 아래의 다음 10개 경계로 구성한다.
+프로그램은 `src/scrap_monitoring_lidar_visualizer/` 아래의 다음 11개 경계로 구성한다.
 
 | 경계 | 책임 |
 | --- | --- |
@@ -21,6 +21,7 @@
 | `preview/` | HTTP(Hypertext Transfer Protocol) 프레임 및 상태 응답과 브라우저 화면 |
 | `replay/` | 기록 순회, 실행 및 구간 선택과 프레임 시각 계산 |
 | `export/` | FFmpeg 실행, MP4 출력과 종료 검증 |
+| `dependency_audit.py` | 실행 image의 의존성 version과 라이선스 고지 경로 inventory |
 
 `contracts/`의 자료형을 나머지 모듈이 공유한다. `geometry/`는 mesh 수치 배열을 반환하고
 렌더링 엔진을 호출하지 않는다. `receiver/`와 `replay/`는 같은 validator와 `state/`의
@@ -173,3 +174,13 @@ Duration과 time scale의 상호 배타 검증 및 총 프레임 수 계산은 �
 기존 출력 파일은 덮어쓰지 않는다. 부분 MP4는 사용자가 지정한 출력 디렉토리 안에 생성하고
 FFmpeg 성공과 ffprobe 검증 뒤 최종 경로로 옮긴다. 쓰기 경로, 로그와 접근 범위는
 프로젝트 명세의 배포 경계를 따른다.
+
+## 배포 경계
+
+Release workflow는 원격 `main`의 version tag를 입력으로 Linux AMD64 OCI(Open Container
+Initiative) image와 Python package를 생성한다. Image는 version과 source commit tag를 같은
+manifest digest에 연결하고 source commit, version 및 저장소를 OCI label로 기록한다.
+
+GHCR image에는 SBOM과 build provenance를 첨부한다. 게시 후 workflow가 image를 digest로
+가져와 제품 CLI, live, replay, rendering, 영상과 의존성 고지를 검사한다. 공개 Package
+확인까지 통과한 산출물만 GitHub Release에 게시한다.

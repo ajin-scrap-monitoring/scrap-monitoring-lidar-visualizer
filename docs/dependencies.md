@@ -2,7 +2,7 @@
 
 ## 직접 의존성
 
-현재 직접 의존성은 런타임 9개, 빌드 및 개발 검사 6개와 GitHub Actions 3개로 총 18개다.
+현재 직접 의존성은 런타임 9개, 빌드 및 개발 검사 6개와 GitHub Actions 6개로 총 21개다.
 
 ### 런타임
 
@@ -39,10 +39,14 @@ Mesa package가 설치하는 전이 구성 요소의 저작권 및 라이선스 
 | actions/checkout | v6.1.0 | 저장소와 tag 이력 조회 | [GitHub](https://github.com/actions/checkout) | MIT |
 | actions/setup-python | v6.3.0 | 검사 Python 설치 | [GitHub](https://github.com/actions/setup-python) | MIT |
 | astral-sh/setup-uv | v10.0.1 | uv 설치와 package cache | [GitHub](https://github.com/astral-sh/setup-uv) | MIT |
+| docker/setup-buildx-action | v4.3.0 | Linux AMD64 image builder 구성 | [GitHub](https://github.com/docker/setup-buildx-action) | Apache-2.0 |
+| docker/login-action | v4.6.0 | GHCR 인증 | [GitHub](https://github.com/docker/login-action) | Apache-2.0 |
+| docker/build-push-action | v7.3.0 | OCI image, SBOM과 provenance 게시 | [GitHub](https://github.com/docker/build-push-action) | Apache-2.0 |
 
 직접 및 전이 Python 의존성과 배포 파일 hash는 `uv.lock`에 고정한다. Container base image와
 uv image는 `Dockerfile`에서 digest로 고정하고 GitHub Actions는 workflow에서 commit hash로
-고정한다. 최종 배포물의 전이 의존성 라이선스 감사는 P7의 공개 검증에 포함한다.
+고정한다. Container의 `dependency_audit.py`는 CPython, Python distribution과 Debian
+package version 및 고지 원문 경로를 Release inventory로 출력한다.
 
 ## 로컬 검증
 
@@ -65,5 +69,5 @@ uv run --frozen python -m compileall -q src tests tools
 scripts/check-headless-container.sh
 ```
 
-CI 실행 정의는 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)에 있다. Release tag
-검사는 tag 대상 commit과 원격 `main` 이력을 비교하며 Release와 image를 게시하지 않는다.
+CI 실행 정의는 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml)에 있다. Release
+workflow는 같은 소스 검사와 컨테이너 검사를 게시한 digest에 다시 적용한다.
