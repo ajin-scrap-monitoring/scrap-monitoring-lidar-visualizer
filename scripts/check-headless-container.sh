@@ -37,6 +37,13 @@ docker run "${runtime_options[@]}" \
   --mount "type=bind,source=${probe_root}/output,target=/output" \
   "${image}"
 
+docker run "${runtime_options[@]}" \
+  --mount "type=bind,source=${probe_root}/output,target=/output" \
+  --entrypoint python \
+  "${image}" \
+  -m scrap_monitoring_lidar_visualizer.rendering.probe \
+  --output /output/scene
+
 test "$(jq -r '.display_present' "${probe_root}/output/probe/probe.json")" = "false"
 test "$(jq -r '.euid' "${probe_root}/output/probe/probe.json")" = "10001"
 test "$(jq -r '.gpu_device_present' "${probe_root}/output/probe/probe.json")" = "false"
@@ -46,6 +53,14 @@ test "$(jq -r '.width' "${probe_root}/output/probe/probe.json")" = "640"
 test "$(jq -r '.height' "${probe_root}/output/probe/probe.json")" = "360"
 test -s "${probe_root}/output/probe/frame.png"
 test -s "${probe_root}/output/probe/probe.mp4"
+test "$(jq -r '.display_present' "${probe_root}/output/scene/scene.json")" = "false"
+test "$(jq -r '.euid' "${probe_root}/output/scene/scene.json")" = "10001"
+test "$(jq -r '.render_window' "${probe_root}/output/scene/scene.json")" = "vtkOSOpenGLRenderWindow"
+test "$(jq -r '.width' "${probe_root}/output/scene/scene.json")" = "640"
+test "$(jq -r '.height' "${probe_root}/output/scene/scene.json")" = "360"
+test "$(jq -r '.surface_faces > 0' "${probe_root}/output/scene/scene.json")" = "true"
+test -s "${probe_root}/output/scene/scene.png"
+test -s "${probe_root}/output/scene/scene-top.png"
 
 benchmark_json="$(
   docker run "${runtime_options[@]}" \

@@ -9,7 +9,6 @@
 .rumdl_cache
 artifacts
 build
-contracts
 docs
 frames
 recordings
