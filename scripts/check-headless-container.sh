@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly image="scrap-monitoring-lidar-visualizer:test"
+readonly image="${IMAGE_UNDER_TEST:-scrap-monitoring-lidar-visualizer:test}"
 probe_root="$(mktemp -d)"
 readonly probe_root
 
@@ -18,7 +18,9 @@ trap cleanup EXIT
 
 install -d -m 0777 "${probe_root}/output"
 
-docker build --platform linux/amd64 --tag "${image}" .
+if [[ "${SKIP_IMAGE_BUILD:-false}" != "true" ]]; then
+  docker build --platform linux/amd64 --tag "${image}" .
+fi
 
 readonly -a runtime_options=(
   --rm
@@ -35,7 +37,21 @@ readonly -a runtime_options=(
 
 docker run "${runtime_options[@]}" \
   --mount "type=bind,source=${probe_root}/output,target=/output" \
-  "${image}"
+  --entrypoint python \
+  "${image}" \
+  -m scrap_monitoring_lidar_visualizer.runtime_probe \
+  --output /output/probe
+
+cli_help="$(docker run "${runtime_options[@]}" "${image}" --help)"
+readonly cli_help
+grep -q '{live,replay}' <<<"${cli_help}"
+
+docker run "${runtime_options[@]}" \
+  --mount "type=bind,source=${probe_root}/output,target=/output" \
+  --entrypoint python \
+  "${image}" \
+  -m scrap_monitoring_lidar_visualizer.dependency_audit \
+  --output /output/dependency-inventory.json
 
 docker run "${runtime_options[@]}" \
   --mount "type=bind,source=${probe_root}/output,target=/output" \
@@ -94,10 +110,15 @@ test "$(jq -r '.playback_frame_count' "${probe_root}/output/replay/replay.json")
 test "$(jq -r '.rendered_sequence' "${probe_root}/output/replay/replay.json")" = "1"
 test -s "${probe_root}/output/replay/replay-preview.png"
 test -s "${probe_root}/output/replay/replay.mp4"
+test "$(jq -r '.machine' "${probe_root}/output/dependency-inventory.json")" = "x86_64"
+test "$(jq -r '.python_distributions | length > 0' "${probe_root}/output/dependency-inventory.json")" = "true"
+test "$(jq -r '.debian_packages | length > 0' "${probe_root}/output/dependency-inventory.json")" = "true"
 
 benchmark_json="$(
   docker run "${runtime_options[@]}" \
+    --entrypoint python \
     "${image}" \
+    -m scrap_monitoring_lidar_visualizer.runtime_probe \
     --output /tmp/benchmark \
     --frame-count 1 \
     --grid-x 512 \

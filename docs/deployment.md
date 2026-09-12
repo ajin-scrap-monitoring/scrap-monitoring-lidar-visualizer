@@ -5,11 +5,12 @@
 현재 package는 TCP 수신, 제한된 기록, 기록 재생, 렌더링 자식 process, HTTP preview와
 H.264 MP4 출력을 연결하는 `lidar-visualizer` CLI를 제공한다. Container 검증은 실제
 loopback TCP 입력, live 및 replay HTTP 응답, 제품 PNG와 ffprobe 영상 구조를 확인한다.
-최종 image entrypoint와 port 선언은 P7에서 적용한다.
+Image entrypoint는 `lidar-visualizer`이고 TCP 7000과 HTTP 8000 port를 선언한다.
 
-Container는 Linux AMD64에서 UID와 GID 10001인 비root 사용자로 실행한다. Root filesystem은
-read-only이고 `/tmp`와 `/output`만 writable 경로다. Runtime probe는 `DISPLAY` 환경 변수,
-`/dev/dri` GPU device와 root 권한이 있으면 실패한다.
+Container는 Linux AMD64에서 UID와 GID 10001인 비root 사용자로 실행한다. 운영 실행은 root
+filesystem을 read-only로 두고 `/tmp`와 기록 또는 영상 출력 volume만 writable 경로로
+제공한다. Runtime probe는 `DISPLAY` 환경 변수, `/dev/dri` GPU device와 root 권한이 있으면
+실패한다.
 
 ## Live 실행
 
@@ -85,7 +86,39 @@ scripts/check-headless-container.sh
 
 검사는 network, Linux capability와 GPU device를 제공하지 않고 process 128개, CPU 2개,
 memory 1 GiB로 container를 제한한다. 출력 JSON의 실행 사용자, renderer, frame 수와 해상도를
-검사하고 ffprobe로 H.264 codec과 영상 해상도를 확인한다.
+검사하고 ffprobe로 H.264 codec과 영상 해상도를 확인한다. 같은 검사에서 CLI entrypoint와
+CPython, Python distribution 및 Debian package의 라이선스 고지 경로를 확인한다.
+
+## 릴리스
+
+`vMAJOR.MINOR.PATCH` tag는 원격 `main`에 포함된 동일 version commit만 가리킨다. Release
+workflow는 Linux AMD64 image를 GHCR(GitHub Container Registry)에 version tag와
+`sha-<commit>` tag로 게시한다. 두 tag는 같은 manifest digest를 가리키며 `latest` tag를
+게시하지 않는다.
+
+Workflow는 image에 SBOM(Software Bill of Materials)과 build provenance를 첨부하고 게시된
+digest를 전체 컨테이너 검사에 사용한다. Package 공개 범위를 확인한 뒤 wheel, source
+archive, image digest, release metadata, 의존성 inventory, 고지와 SHA-256 checksum을 draft
+Release에 올리고 최종 게시한다.
+
+공개 image는 Release의 `oci-image.txt`에 기록된 digest로 실행한다.
+
+```bash
+docker run --rm \
+  --platform linux/amd64 \
+  --read-only \
+  --cap-drop ALL \
+  --security-opt no-new-privileges \
+  --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+  --publish 7000:7000 \
+  --publish 8000:8000 \
+  ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:<digest> \
+  live \
+  --tcp-host 0.0.0.0 \
+  --tcp-port 7000 \
+  --http-host 0.0.0.0 \
+  --http-port 8000
+```
 
 ## 자원 기준
 
@@ -105,13 +138,12 @@ memory 1 GiB로 container를 제한한다. 출력 JSON의 실행 사용자, rend
 경계 polygon은 최대 vertex 1,024개를 허용한다. 수치 상한의 정본은
 [`limits.py`](../src/scrap_monitoring_lidar_visualizer/limits.py)다.
 
-2026-09-12 Linux AMD64 host에서 Docker Engine 29.5.2로 측정한 결과는 다음과 같다. 배포
-환경의 Docker Engine 29.8.0 검증은 P7 container 검증에 포함한다.
+2026-09-12 Linux AMD64 host에서 Docker Engine 29.5.2로 측정한 결과는 다음과 같다.
 
 | 입력 | Frame | 총 rendering | 최대 RSS |
 | --- | --- | --- | --- |
 | 격자 node 825개 | 640 x 360, 10 frame | 0.580초 | 367.535 MiB |
 | 격자 node 262,144개 | 640 x 360, 1 frame | 0.575초 | 457.273 MiB |
 
-현재 image 크기는 391.865 MiB다. 측정값은 성능 보장이 아니라 동일 상한에서 회귀를 비교하기
+현재 image 크기는 395.350 MiB다. 측정값은 성능 보장이 아니라 동일 상한에서 회귀를 비교하기
 위한 기준이다.
