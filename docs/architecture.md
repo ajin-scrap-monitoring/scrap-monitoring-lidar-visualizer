@@ -31,8 +31,9 @@
 
 ## 기술 선택
 
-구현에 사용하는 기술 묶음은 다음 6개다. 설치 버전과 시스템 패키지 조합의 고정은 개발
-계획 P1의 산출물이며, 이 표는 설치 완료 상태를 의미하지 않는다.
+구현에 사용하는 기술 묶음은 다음 6개다. P1에 필요한 Python, NumPy, PyVista, VTK, Mesa와
+FFmpeg 조합은 설치 및 검증됐으며 버전은 [의존성](dependencies.md)에서 관리한다.
+FastAPI와 Uvicorn은 P5에서 설치한다.
 
 | 기술 | 채택 목적 | 공식 출처 |
 | --- | --- | --- |
@@ -43,10 +44,11 @@
 | FastAPI와 Uvicorn | 최신 프레임과 상태의 제한된 HTTP 서비스 | [FastAPI](https://fastapi.tiangolo.com/), [Uvicorn](https://www.uvicorn.org/) |
 | FFmpeg와 ffprobe | 영상 인코딩과 출력 영상의 구조 검증 | [FFmpeg](https://ffmpeg.org/documentation.html) |
 
-PyVista의 off-screen 렌더링과 Mesa 소프트웨어 경로를 사용한다. 해당 조합의 headless
-지원 근거는 [PyVista 설치 문서](https://docs.pyvista.org/getting-started/installation.html#running-on-mybinder)에
-있다. 실제 Linux AMD64 비root 컨테이너에서 GPU(Graphics Processing Unit)와 `DISPLAY`
-없이 프레임 생성과 영상 인코딩을 검증한 버전만 고정한다.
+PyVista의 off-screen rendering은 VTK의 `vtkOSOpenGLRenderWindow`와 Mesa `libosmesa6`를
+사용한다. Container는 `VTK_DEFAULT_OPENGL_WINDOW`로 renderer를 고정하고
+`LIBGL_ALWAYS_SOFTWARE`로 CPU(Central Processing Unit) 경로를 요구한다. Linux AMD64
+비root container가 GPU(Graphics Processing Unit), `DISPLAY`와 network 없이 frame과
+MP4를 생성하는지 CI에서 검사한다.
 
 ## 실행 경계
 

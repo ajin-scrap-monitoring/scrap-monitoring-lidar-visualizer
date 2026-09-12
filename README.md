@@ -4,7 +4,7 @@ LiDAR(Light Detection and Ranging) 적재 모델 관찰 데이터를 서버에�
 
 ## 프로젝트 문서
 
-진입 문서는 다음 5개다.
+진입 문서는 다음 6개다.
 
 | 문서 | 내용 |
 | --- | --- |
@@ -13,6 +13,17 @@ LiDAR(Light Detection and Ranging) 적재 모델 관찰 데이터를 서버에�
 | [아키텍처](docs/architecture.md) | 채택한 구현 설계 |
 | [프로젝트 작업 지침](.agents/AGENTS.md) | 에이전트 작업 경계와 조직 운영 문서 |
 | [검증 환경](docs/dependencies.md) | 검증 의존성과 로컬 실행 방법 |
+| [실행 환경](docs/deployment.md) | Container 실행 경계와 자원 기준 |
+
+## 개발 검증
+
+Python 환경과 기본 검사를 실행한다.
+
+```bash
+uv sync --locked --all-groups
+uv run --frozen python -m pytest
+scripts/check-headless-container.sh
+```
 
 ## 에이전트 디렉토리
 
