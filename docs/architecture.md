@@ -32,8 +32,8 @@
 ## 기술 선택
 
 구현에 사용하는 기술 묶음은 다음 6개다. P1에 필요한 Python, NumPy, PyVista, VTK, Mesa와
-FFmpeg 조합은 설치 및 검증됐으며 버전은 [의존성](dependencies.md)에서 관리한다.
-FastAPI와 Uvicorn은 P5에서 설치한다.
+FFmpeg 조합과 FastAPI 및 Uvicorn은 설치 및 검증됐으며 버전은
+[의존성](dependencies.md)에서 관리한다.
 
 | 기술 | 채택 목적 | 공식 출처 |
 | --- | --- | --- |

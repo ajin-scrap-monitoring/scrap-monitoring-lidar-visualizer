@@ -23,6 +23,8 @@ class RenderRequest:
     connected: bool
     missing_sequences: int
     config: RenderConfig
+    temp_dir: Path | None = None
+    connection_label: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,7 +39,9 @@ class RenderOutcome:
 def _render(generation: int, request: RenderRequest) -> RenderOutcome:
     try:
         geometry = build_scene_geometry(request.header, request.observation)
-        with tempfile.TemporaryDirectory(prefix="lidar-render-") as directory:
+        with tempfile.TemporaryDirectory(
+            prefix="lidar-render-", dir=request.temp_dir
+        ) as directory:
             path = Path(directory) / "frame.png"
             render_scene(
                 path,
@@ -47,6 +51,7 @@ def _render(generation: int, request: RenderRequest) -> RenderOutcome:
                 config=request.config,
                 connected=request.connected,
                 missing_sequences=request.missing_sequences,
+                connection_label=request.connection_label,
             )
             png = path.read_bytes()
         return RenderOutcome(
@@ -99,6 +104,10 @@ class LatestRenderWorker:
 
     def start(self) -> None:
         self._process.start()
+
+    @property
+    def is_alive(self) -> bool:
+        return self._process.is_alive()
 
     def submit(self, request: RenderRequest) -> None:
         envelope = (self._generation, request)

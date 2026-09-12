@@ -90,10 +90,14 @@ def _camera_position(
 
 
 def _overlay(
-    observation: Observation, *, connected: bool, missing_sequences: int
+    observation: Observation,
+    *,
+    connected: bool,
+    missing_sequences: int,
+    connection_label: str | None,
 ) -> str:
     scenario = observation.scenario
-    connection = "connected" if connected else "disconnected"
+    connection = connection_label or ("connected" if connected else "disconnected")
     return "\n".join(
         (
             f"run: {observation.run_id}",
@@ -115,6 +119,7 @@ def describe_scene(
     config: RenderConfig,
     connected: bool,
     missing_sequences: int,
+    connection_label: str | None = None,
 ) -> SceneDescription:
     config.validate()
     active_inlet = (
@@ -128,6 +133,7 @@ def describe_scene(
             observation,
             connected=connected,
             missing_sequences=missing_sequences,
+            connection_label=connection_label,
         ),
         active_inlet_index=active_inlet,
     )
@@ -142,6 +148,7 @@ def render_scene(
     config: RenderConfig | None = None,
     connected: bool,
     missing_sequences: int,
+    connection_label: str | None = None,
 ) -> RenderResult:
     config = config or RenderConfig()
     config.validate()
@@ -151,6 +158,7 @@ def render_scene(
         config=config,
         connected=connected,
         missing_sequences=missing_sequences,
+        connection_label=connection_label,
     )
     if output_path.exists():
         raise FileExistsError(output_path)
