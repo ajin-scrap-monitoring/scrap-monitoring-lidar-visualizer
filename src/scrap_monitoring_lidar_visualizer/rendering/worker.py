@@ -78,14 +78,7 @@ def _worker_main(requests: Any, outcomes: Any) -> None:
             return
         generation, request = envelope
         outcome = _render(generation, request)
-        try:
-            outcomes.put_nowait(outcome)
-        except Full:
-            try:
-                outcomes.get_nowait()
-            except Empty:
-                pass
-            outcomes.put_nowait(outcome)
+        outcomes.put(outcome)
 
 
 class LatestRenderWorker:
@@ -100,6 +93,7 @@ class LatestRenderWorker:
         )
         self._frames = frames
         self._generation = 0
+        self._pending: tuple[int, RenderRequest] | None = None
         self.last_error: str | None = None
 
     def start(self) -> None:
@@ -110,23 +104,22 @@ class LatestRenderWorker:
         return self._process.is_alive()
 
     def submit(self, request: RenderRequest) -> None:
-        envelope = (self._generation, request)
-        try:
-            self._requests.put_nowait(envelope)
+        self._pending = (self._generation, request)
+        self._flush_pending()
+
+    def _flush_pending(self) -> None:
+        if self._pending is None:
             return
-        except Full:
-            pass
         try:
-            self._requests.get_nowait()
-        except Empty:
-            pass
-        try:
-            self._requests.put_nowait(envelope)
+            self._requests.put_nowait(self._pending)
         except Full:
-            pass
+            return
+        self._pending = None
 
     def invalidate(self) -> None:
         self._generation += 1
+        self._pending = None
+        self.last_error = None
         while True:
             try:
                 self._requests.get_nowait()
@@ -145,6 +138,7 @@ class LatestRenderWorker:
                 latest = self._outcomes.get_nowait()
             except Empty:
                 break
+        self._flush_pending()
         if latest is None or latest.generation != self._generation:
             return None
         if latest.error is not None or latest.png is None:
@@ -155,9 +149,15 @@ class LatestRenderWorker:
         return latest
 
     def close(self, timeout_s: float = 5.0) -> None:
+        self._pending = None
         while True:
             try:
                 self._requests.get_nowait()
+            except Empty:
+                break
+        while True:
+            try:
+                self._outcomes.get_nowait()
             except Empty:
                 break
         try:

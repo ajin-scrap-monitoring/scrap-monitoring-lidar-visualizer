@@ -113,7 +113,6 @@ def create_preview_app(
             headers={
                 "Cache-Control": "no-store",
                 "X-Frame-Revision": str(snapshot.revision),
-                "X-Run-Id": snapshot.run_id,
                 "X-Sequence": str(snapshot.sequence),
             },
         )

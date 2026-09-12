@@ -61,6 +61,17 @@ def test_fixture_parses_to_immutable_models(parser: ContractParser) -> None:
         parsed[1].value.sequence = 2  # type: ignore[misc]
 
 
+def test_default_parser_uses_packaged_schemas(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    header_line = FIXTURE_PATH.resolve().read_bytes().splitlines(True)[0]
+    monkeypatch.chdir(tmp_path)
+    parser = ContractParser()
+    parsed = parser.parse_line(header_line)
+
+    assert isinstance(parsed.value, Header)
+
+
 @pytest.mark.parametrize(
     ("line", "code"),
     [

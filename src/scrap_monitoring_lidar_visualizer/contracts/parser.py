@@ -179,15 +179,9 @@ class ContractParser:
 
     @staticmethod
     def _default_contract_root() -> Path:
-        repository_root = Path(__file__).resolve().parents[3]
-        candidates = (
-            Path.cwd() / "contracts" / "observation" / "v1",
-            repository_root / "contracts" / "observation" / "v1",
-            Path("/app/contracts/observation/v1"),
-        )
-        for candidate in candidates:
-            if (candidate / "header.schema.json").is_file():
-                return candidate
+        candidate = Path(__file__).with_name("schema") / "v1"
+        if (candidate / "header.schema.json").is_file():
+            return candidate
         raise ContractError("schema_source", "Observation version 1 schemas not found")
 
     @staticmethod

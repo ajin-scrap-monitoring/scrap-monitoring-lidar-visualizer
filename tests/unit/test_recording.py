@@ -92,3 +92,58 @@ def test_async_writer_reports_write_failure(tmp_path: Path) -> None:
         assert snapshot.written_records == 0
 
     asyncio.run(exercise())
+
+
+def test_async_writer_retries_short_writes(tmp_path: Path) -> None:
+    class ShortWritingFile(io.BytesIO):
+        def write(self, data: bytes, /) -> int:
+            return super().write(data[:2])
+
+        def close(self) -> None:
+            pass
+
+    async def exercise() -> None:
+        stream = ShortWritingFile()
+        writer = AsyncRecordWriter(
+            tmp_path / "record.jsonl",
+            max_records=1,
+            max_bytes=100,
+            file_opener=lambda _: stream,
+        )
+        await writer.start()
+        assert writer.submit(b"record\n") is True
+        snapshot = await writer.close()
+
+        assert stream.getvalue() == b"record\n"
+        assert snapshot.written_records == 1
+        assert snapshot.written_bytes == 7
+
+    asyncio.run(exercise())
+
+
+def test_async_writer_reports_close_failure(tmp_path: Path) -> None:
+    class CloseFailingFile(io.BytesIO):
+        attempts = 0
+
+        def close(self) -> None:
+            self.attempts += 1
+            if self.attempts == 1:
+                raise OSError("close failed")
+            super().close()
+
+    async def exercise() -> None:
+        stream = CloseFailingFile()
+        writer = AsyncRecordWriter(
+            tmp_path / "record.jsonl",
+            max_records=1,
+            max_bytes=100,
+            file_opener=lambda _: stream,
+        )
+        await writer.start()
+        assert writer.submit(b"record\n") is True
+        snapshot = await writer.close()
+
+        assert snapshot.reason == "write_error"
+        assert snapshot.error == "close failed"
+
+    asyncio.run(exercise())
