@@ -6,6 +6,10 @@ from scrap_monitoring_lidar_visualizer.contracts.parser import MAX_RECORD_BYTES
 class LineFramingError(ValueError):
     """A connection-level line framing error."""
 
+    def __init__(self, message: str, completed_records: tuple[bytes, ...] = ()) -> None:
+        super().__init__(message)
+        self.completed_records = completed_records
+
 
 class LineFramer:
     def __init__(self, max_record_bytes: int = MAX_RECORD_BYTES) -> None:
@@ -26,12 +30,12 @@ class LineFramer:
             if line_end < 0:
                 if len(self._buffer) >= self._max_record_bytes:
                     self._buffer.clear()
-                    raise LineFramingError("record byte limit exceeded")
+                    raise LineFramingError("record byte limit exceeded", tuple(records))
                 return tuple(records)
             record_size = line_end + 1
             if record_size > self._max_record_bytes:
                 self._buffer.clear()
-                raise LineFramingError("record byte limit exceeded")
+                raise LineFramingError("record byte limit exceeded", tuple(records))
             records.append(bytes(self._buffer[:record_size]))
             del self._buffer[:record_size]
 

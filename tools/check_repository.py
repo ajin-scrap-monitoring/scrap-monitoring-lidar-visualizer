@@ -65,6 +65,12 @@ def check_contracts(root: Path) -> None:
     for name, metadata in provenance["files"].items():
         digest = hashlib.sha256((base / name).read_bytes()).hexdigest()
         require(digest == metadata["sha256"], f"Contract checksum mismatch: {name}")
+    packaged = root / "src/scrap_monitoring_lidar_visualizer/contracts/schema/v1"
+    for name in ("header.schema.json", "observation.schema.json"):
+        require(
+            (packaged / name).read_bytes() == (base / name).read_bytes(),
+            f"Packaged contract differs from fixed source: {name}",
+        )
     validators = []
     for name in ("header.schema.json", "observation.schema.json"):
         schema = json.loads((base / name).read_text(encoding="utf-8"))

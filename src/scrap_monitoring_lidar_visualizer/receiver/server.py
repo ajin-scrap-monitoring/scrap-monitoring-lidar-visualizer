@@ -77,14 +77,22 @@ class ObservationReceiver:
             connections_accepted=self.snapshot.connections_accepted + 1,
         )
         try:
-            pending = await asyncio.wait_for(
+            pending, framing_error = await asyncio.wait_for(
                 self._read_header(reader, framer), timeout=self._header_timeout_s
             )
             accepted_header = True
             for raw_line in pending:
                 self._process_observation(raw_line)
+            if framing_error is not None:
+                raise framing_error
             while data := await reader.read(65_536):
-                for raw_line in framer.feed(data):
+                try:
+                    records = framer.feed(data)
+                except LineFramingError as error:
+                    for raw_line in error.completed_records:
+                        self._process_observation(raw_line)
+                    raise
+                for raw_line in records:
                     self._process_observation(raw_line)
         except TimeoutError:
             self._connection_error("header timeout")
@@ -111,10 +119,17 @@ class ObservationReceiver:
 
     async def _read_header(
         self, reader: asyncio.StreamReader, framer: LineFramer
-    ) -> tuple[bytes, ...]:
+    ) -> tuple[tuple[bytes, ...], LineFramingError | None]:
         while data := await reader.read(65_536):
-            records = framer.feed(data)
+            framing_error = None
+            try:
+                records = framer.feed(data)
+            except LineFramingError as error:
+                records = error.completed_records
+                framing_error = error
             if not records:
+                if framing_error is not None:
+                    raise framing_error
                 continue
             parsed = self._parser.parse_line(records[0])
             if not isinstance(parsed.value, Header):
@@ -123,7 +138,7 @@ class ObservationReceiver:
             self._accept_raw(parsed.raw_line)
             if self._on_state is not None:
                 self._on_state(self.state)
-            return records[1:]
+            return records[1:], framing_error
         raise _ConnectionRejected("connection ended before a stream header")
 
     def _process_observation(self, raw_line: bytes) -> None:

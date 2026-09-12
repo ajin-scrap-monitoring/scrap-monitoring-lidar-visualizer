@@ -151,6 +151,24 @@ def test_receiver_discards_partial_line() -> None:
     asyncio.run(exercise())
 
 
+def test_receiver_accepts_complete_prefix_before_framing_error() -> None:
+    async def exercise() -> None:
+        receiver = ObservationReceiver(ContractParser(CONTRACT_ROOT))
+        server, host, port = await _start(receiver)
+        header, _ = _fixture_lines()
+
+        await _send(host, port, (header + _observation(1, 1.0) + b"x" * 1_048_576,))
+        server.close()
+        await server.wait_closed()
+
+        assert receiver.snapshot.records_accepted == 2
+        assert receiver.state.observation is not None
+        assert receiver.state.observation.sequence == 1
+        assert receiver.snapshot.last_error == "record byte limit exceeded"
+
+    asyncio.run(exercise())
+
+
 def test_receiver_rejects_additional_producer() -> None:
     async def exercise() -> None:
         receiver = ObservationReceiver(

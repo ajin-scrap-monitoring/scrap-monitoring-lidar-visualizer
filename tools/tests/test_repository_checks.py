@@ -18,6 +18,8 @@ class RepositoryChecksTest(unittest.TestCase):
         source = Path(__file__).resolve().parents[2]
         for name in (".agents", "contracts", "docs"):
             shutil.copytree(source / name, self.root / name)
+        packaged = "src/scrap_monitoring_lidar_visualizer/contracts/schema"
+        shutil.copytree(source / packaged, self.root / packaged)
         for name, target in (
             ("AGENTS.md", ".agents/AGENTS.md"),
             ("GEMINI.md", ".agents/AGENTS.md"),
@@ -47,6 +49,15 @@ class RepositoryChecksTest(unittest.TestCase):
         fixture = self.root / "contracts/observation/v1/fixtures/observation.v1.jsonl"
         fixture.write_bytes(fixture.read_bytes() + b"\n")
         with self.assertRaisesRegex(ValueError, "Contract checksum mismatch"):
+            check_contracts(self.root)
+
+    def test_packaged_contract_change_is_rejected(self):
+        schema = (
+            self.root
+            / "src/scrap_monitoring_lidar_visualizer/contracts/schema/v1/header.schema.json"
+        )
+        schema.write_bytes(schema.read_bytes() + b"\n")
+        with self.assertRaisesRegex(ValueError, "Packaged contract differs"):
             check_contracts(self.root)
 
     def test_invalid_record_is_rejected_even_with_matching_checksum(self):

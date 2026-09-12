@@ -13,6 +13,15 @@ DEFAULT_QUEUE_RECORDS = 128
 DEFAULT_QUEUE_BYTES = 8 * 1024 * 1024
 
 
+def _write_all(stream: BinaryIO, raw_line: bytes) -> None:
+    remaining = memoryview(raw_line)
+    while remaining:
+        written = stream.write(remaining)
+        if written is None or written <= 0 or written > len(remaining):
+            raise OSError("recording write made no progress")
+        remaining = remaining[written:]
+
+
 @dataclass(frozen=True, slots=True)
 class RecordingSnapshot:
     accepting: bool
@@ -90,9 +99,10 @@ class RecordBuffer:
             self._error = error
 
     def fail(self, error: str) -> None:
-        self._accepting = False
-        self._reason = "write_error"
-        self._error = error
+        if self._reason != "write_error":
+            self._accepting = False
+            self._reason = "write_error"
+            self._error = error
 
     @property
     def empty(self) -> bool:
@@ -174,7 +184,7 @@ class AsyncRecordWriter:
                 raw_line = self._buffer.pop()
                 if raw_line is not None:
                     try:
-                        await asyncio.to_thread(self._file.write, raw_line)
+                        await asyncio.to_thread(_write_all, self._file, raw_line)
                     except OSError as error:
                         self._buffer.fail(str(error))
                         break
@@ -187,4 +197,7 @@ class AsyncRecordWriter:
                     continue
                 await self._wake.wait()
         finally:
-            await asyncio.to_thread(self._file.close)
+            try:
+                await asyncio.to_thread(self._file.close)
+            except OSError as error:
+                self._buffer.fail(str(error))

@@ -25,6 +25,16 @@ def test_framer_rejects_limit_without_lf() -> None:
     assert framer.buffered_bytes == 0
 
 
+def test_framer_preserves_completed_prefix_before_limit_error() -> None:
+    framer = LineFramer(max_record_bytes=5)
+
+    with pytest.raises(LineFramingError) as raised:
+        framer.feed(b"ok\n12345")
+
+    assert raised.value.completed_records == (b"ok\n",)
+    assert framer.buffered_bytes == 0
+
+
 def test_framer_discards_partial_line() -> None:
     framer = LineFramer()
     framer.feed(b"partial")

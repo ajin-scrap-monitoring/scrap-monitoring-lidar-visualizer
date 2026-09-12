@@ -68,7 +68,9 @@ def test_renderer_invalidation_discards_previous_run_outcome() -> None:
     worker = LatestRenderWorker.__new__(LatestRenderWorker)
     worker._frames = frames
     worker._generation = 2
+    worker._requests = Queue[Any]()
     worker._outcomes = Queue[Any]()
+    worker._pending = None
     worker._outcomes.put(
         RenderOutcome(
             generation=1,
@@ -83,6 +85,25 @@ def test_renderer_invalidation_discards_previous_run_outcome() -> None:
     assert worker.poll() is None
 
     assert frames.get() is None
+
+
+def test_renderer_keeps_latest_pending_request_when_mailbox_is_full() -> None:
+    frames = LatestFrameStore()
+    worker = LatestRenderWorker.__new__(LatestRenderWorker)
+    worker._frames = frames
+    worker._generation = 0
+    worker._requests = Queue[Any](maxsize=1)
+    worker._outcomes = Queue[Any]()
+    worker._pending = None
+    worker.last_error = None
+    worker._requests.put((0, "old"))
+
+    worker.submit("latest")
+
+    assert worker._requests.get_nowait() == (0, "old")
+    assert worker._pending == (0, "latest")
+    assert worker.poll() is None
+    assert worker._requests.get_nowait() == (0, "latest")
 
 
 def test_preview_http_endpoints_return_latest_frame() -> None:
@@ -109,12 +130,14 @@ def test_preview_http_endpoints_return_latest_frame() -> None:
             assert body == b""
             assert headers["cache-control"] == "no-store"
 
-            frames.publish(b"\x89PNG\r\n\x1a\nframe", run_id="run-a", sequence=7)
+            frames.publish(
+                b"\x89PNG\r\n\x1a\nframe", run_id="run-a\nunsafe", sequence=7
+            )
             status, headers, body = await _request(port, "/frame.png")
             assert status == 200
             assert headers["content-type"] == "image/png"
             assert headers["x-frame-revision"] == "1"
-            assert headers["x-run-id"] == "run-a"
+            assert "x-run-id" not in headers
             assert headers["x-sequence"] == "7"
             assert body.startswith(b"\x89PNG")
 
