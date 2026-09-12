@@ -2,13 +2,14 @@
 
 ## 직접 의존성
 
-현재 직접 의존성은 런타임 6개, 빌드 및 개발 검사 7개와 GitHub Actions 3개로 총 16개다.
+현재 직접 의존성은 런타임 7개, 빌드 및 개발 검사 6개와 GitHub Actions 3개로 총 16개다.
 
 ### 런타임
 
 | 의존성 | 버전 | 목적 | 공식 출처 | 라이선스 |
 | --- | --- | --- | --- | --- |
 | Python | 3.14.7 | 애플리케이션 실행 | [Python](https://www.python.org/downloads/release/python-3147/) | PSF-2.0 |
+| jsonschema | 4.26.0 | 고정 계약 schema 검증 | [PyPI](https://pypi.org/project/jsonschema/4.26.0/) | MIT |
 | NumPy | 2.5.3 | 격자와 frame 수치 배열 | [PyPI](https://pypi.org/project/numpy/2.5.3/) | BSD-3-Clause |
 | PyVista | 0.49.0 | VTK 장면과 off-screen rendering 경계 | [PyPI](https://pypi.org/project/pyvista/0.49.0/) | MIT |
 | VTK | 9.7.0 | OSMesa 기반 3D rendering | [PyPI](https://pypi.org/project/vtk/9.7.0/) | BSD-3-Clause |
@@ -23,7 +24,6 @@ Mesa package가 설치하는 전이 구성 요소의 저작권 및 라이선스 
 | 의존성 | 버전 | 목적 | 공식 출처 | 라이선스 |
 | --- | --- | --- | --- | --- |
 | uv 및 uv_build | 0.12.13 | 환경 설치, lockfile과 Python package build | [GitHub](https://github.com/astral-sh/uv) | Apache-2.0 OR MIT |
-| jsonschema | 4.26.0 | 고정 계약 schema 및 fixture 검사 | [PyPI](https://pypi.org/project/jsonschema/4.26.0/) | MIT |
 | mypy | 2.3.1 | 정적 타입 검사 | [PyPI](https://pypi.org/project/mypy/2.3.1/) | MIT |
 | pytest | 9.1.1 | 자동 테스트 실행 | [PyPI](https://pypi.org/project/pytest/9.1.1/) | MIT |
 | Ruff | 0.16.6 | Python 형식과 lint 검사 | [PyPI](https://pypi.org/project/ruff/0.16.6/) | MIT |
