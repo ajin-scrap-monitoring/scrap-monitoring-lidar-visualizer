@@ -30,6 +30,10 @@
 외부 라이브러리는 해당 기능의 경계 안에서 사용한다. 네트워크와 파일 입출력,
 렌더링 엔진 호출을 mesh 계산과 프레임 선택 함수에 포함하지 않는다.
 
+Parser는 package 내부의 Observation version 1 schema를 기본 입력으로 사용한다. 저장소
+검사는 package schema가 `contracts/observation/v1/`의 고정 사본과 byte 단위로 같은지
+확인하고 wheel 검사는 두 schema가 배포 산출물에 포함되는지 확인한다.
+
 ## 기술 선택
 
 구현에 사용하는 기술 묶음은 다음 6개다. P1에 필요한 Python, NumPy, PyVista, VTK, Mesa와
@@ -81,9 +85,11 @@ Recording -> Replay -> Validator -> Frame selection -> Renderer -> FFmpeg -> MP4
                                                      HTTP preview -> Browser
 ```
 
-렌더링 자식 프로세스는 한 번에 snapshot 1개를 처리한다. 주 프로세스는 처리 중 도착한
-관찰 중 최신 1개만 보관하고 자식 프로세스가 다음 작업을 받을 수 있을 때 전달한다.
-이 방식으로 수신 event loop에서 렌더링 작업과 대기 시간을 분리한다.
+렌더링 자식 프로세스는 한 번에 snapshot 1개를 처리한다. 주 프로세스는 전달한 요청의
+결과를 받을 때까지 새 요청을 enqueue하지 않고, 그동안 도착한 관찰 중 최신 1개만
+보관한다. 결과를 받은 뒤 최신 pending 요청을 전달하므로 처리 중인 요청 외의 대기
+snapshot은 1개로 제한된다. 이 방식으로 수신 event loop에서 렌더링 작업과 대기 시간을
+분리한다.
 
 ## 자원 정책
 
@@ -104,7 +110,9 @@ Recording -> Replay -> Validator -> Frame selection -> Renderer -> FFmpeg -> MP4
 
 기록 경로의 사전 검증 오류는 시작 실패로 처리한다. 실행 중 기록 쓰기 오류는 기록을
 중단하고 상태 및 로그에 표시하며 live 수신을 계속한다. 최종 프로세스 종료 code에도
-실행 중 기록 실패를 반영한다. 사용자 한도 도달은 정상적인 기록 종료다.
+실행 중 기록 실패를 반영한다. 기록 worker는 짧은 쓰기를 반복해 line 전체를 저장한 뒤
+기록 수치를 갱신하며 파일 close 오류도 쓰기 실패로 처리한다. 사용자 한도 도달은 정상적인
+기록 종료다.
 
 FFmpeg에는 프레임을 순서대로 전달하고 모든 프레임을 메모리에 누적하지 않는다.
 FFmpeg 처리 제한 시간과 종료 code를 검사한다. Mesh 생성에는 node 및 face 수와 clipping
@@ -116,6 +124,9 @@ Receiver는 연결별 byte buffer에서 LF로 끝난 레코드만 validator에 �
 중복 JSON key와 유한하지 않은 수치를 거부하며 원본 byte는 기록을 위해 별도로 유지한다.
 Schema 검사 뒤에는 좌표 증가, 높이 배열 shape, 투입구 index, sensor 방향과 경계 형상처럼
 schema가 표현하지 않는 의미 제약을 검사한다.
+
+한 입력 chunk에서 framing 한도 오류가 발생해도 오류 앞에서 완성된 레코드는 순서대로
+처리한다. 한도를 초과한 레코드와 남은 buffer는 폐기하고 해당 연결을 종료한다.
 
 유효한 header를 수락한 뒤에만 현재 장면을 교체한다. 같은 실행의 재접속 header는 정적
 정보를 비교하고 기존 sequence 상태에 연결한다. 새 실행으로 전환하면 새 실행의 관찰을
@@ -156,8 +167,8 @@ Preview 경로는 다음 3개다. Live와 replay는 같은 경로를 사용한�
 
 브라우저는 이전 요청이 끝난 뒤 다음 요청을 보낸다. HTTP 요청은 보관된 프레임과 상태를
 읽으며 렌더링을 직접 시작하지 않는다. 상태에는 최신 수신 sequence와 화면에 반영된
-sequence를 구분하여 렌더링 지연을 표시한다. 프레임 응답은 해당 프레임의 식별 정보를
-함께 제공하고 캐시로 이전 프레임을 재사용하지 않게 한다.
+sequence를 구분하여 렌더링 지연을 표시한다. 프레임 응답 header는 frame revision과
+sequence를 제공하고 캐시로 이전 프레임을 재사용하지 않게 한다.
 
 ## Replay와 영상
 
