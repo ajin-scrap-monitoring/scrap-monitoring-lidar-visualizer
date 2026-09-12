@@ -2,9 +2,9 @@
 
 ## 현재 산출물
 
-현재 container는 P1 headless runtime을 검증한다. Python package가 합성 표면을 OSMesa로
-rendering하여 PNG frame 1개와 H.264 MP4 1개를 `/output/probe/`에 생성하고 ffprobe로 영상
-구조를 검사한다. TCP 수신 port와 HTTP preview port는 아직 제공하지 않는다.
+현재 container는 합성 표면의 PNG 및 H.264 MP4와 고정 계약 fixture의 제품 장면을 OSMesa로
+rendering한다. 제품 장면 검증은 사선 및 상면 camera, 경계 clipping mesh, 장면 요소와 상태
+overlay를 포함한다. TCP 수신 port와 HTTP preview port는 아직 제공하지 않는다.
 
 Container는 Linux AMD64에서 UID와 GID 10001인 비root 사용자로 실행한다. Root filesystem은
 read-only이고 `/tmp`와 `/output`만 writable 경로다. Runtime probe는 `DISPLAY` 환경 변수,

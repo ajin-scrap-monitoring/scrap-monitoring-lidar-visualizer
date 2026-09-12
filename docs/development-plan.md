@@ -8,10 +8,10 @@
 
 ## 현재 상태
 
-P3 TCP 수신과 제한된 원본 기록은
-[이슈 #11](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/issues/11)에서 관리한다.
-고정 계약 parser, 실행 상태 전이, LF 조립기, 단일 producer 수신기와 제한된 기록 worker가
-있다. 제품 renderer와 preview server는 아직 없다.
+P4 결정론적 mesh와 장면 렌더링은
+[이슈 #13](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/issues/13)에서 관리한다.
+수신 및 기록 경계, 경계 clipping mesh와 headless 제품 장면 renderer가 있다. Live CLI와
+preview server는 아직 없다.
 
 고정 계약의 원본과 해시는 [provenance.json](../contracts/observation/v1/provenance.json)에
 있다. 해당 사본은 로컬 생성기 저장소의 지정 commit에서 가져온 공개 합성 계약이다.
@@ -29,13 +29,13 @@ Schema가 표현하지 않는 조건과 명세의 추가 수신 및 preview 요�
 | P1 | 실행 환경과 headless 렌더링 검증 | P0 | 완료 |
 | P2 | 계약 parser와 실행 상태 판정 | P1 | 완료 |
 | P3 | TCP(Transmission Control Protocol) 수신과 제한된 원본 기록 | P2 | 완료 |
-| P4 | 결정론적인 mesh와 장면 렌더링 | P1, P2 | 미착수 |
+| P4 | 결정론적인 mesh와 장면 렌더링 | P1, P2 | 완료 |
 | P5 | Live CLI(Command-Line Interface)와 HTTP(Hypertext Transfer Protocol) preview 통합 | P3, P4 | 미착수 |
 | P6 | 기록 재생과 MP4 출력 | P3, P4, P5 | 미착수 |
 | P7 | 컨테이너 및 릴리스 검증 | P5, P6 | 미착수 |
 
-다음 구현 작업은 P4다. 경계 안으로 제한한 결정론적 mesh, 장면 요소, camera와 overlay를
-구현한다. P1에서 고정한 Python, OSMesa와 FFmpeg 조합 및 자원 기준은
+다음 구현 작업은 P5다. 수신 상태와 renderer를 Live CLI 및 제한된 HTTP preview에
+통합한다. P1에서 고정한 Python, OSMesa와 FFmpeg 조합 및 자원 기준은
 [실행 환경](deployment.md)을 따른다.
 
 ## P0. 프로젝트 기준 구성
