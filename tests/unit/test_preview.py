@@ -80,11 +80,13 @@ def test_renderer_invalidation_discards_previous_run_outcome() -> None:
             error=None,
         )
     )
-    worker.last_error = None
+    worker.last_error = "old renderer error"
+
+    worker.invalidate()
 
     assert worker.poll() is None
-
     assert frames.get() is None
+    assert worker.last_error is None
 
 
 def test_renderer_keeps_latest_pending_request_when_mailbox_is_full() -> None:
