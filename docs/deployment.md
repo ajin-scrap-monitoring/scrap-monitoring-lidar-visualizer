@@ -2,13 +2,43 @@
 
 ## 현재 산출물
 
-현재 container는 합성 표면의 PNG 및 H.264 MP4와 고정 계약 fixture의 제품 장면을 OSMesa로
-rendering한다. 제품 장면 검증은 사선 및 상면 camera, 경계 clipping mesh, 장면 요소와 상태
-overlay를 포함한다. TCP 수신 port와 HTTP preview port는 아직 제공하지 않는다.
+현재 package는 TCP 수신, 제한된 기록, 렌더링 자식 process와 HTTP preview를 연결하는
+`lidar-visualizer live` CLI를 제공한다. Container 검증은 실제 loopback TCP 입력을 제품
+renderer에 전달하고 HTTP 화면, 상태와 최신 PNG 응답을 확인한다. 최종 image entrypoint와
+port 선언은 P7에서 적용한다.
 
 Container는 Linux AMD64에서 UID와 GID 10001인 비root 사용자로 실행한다. Root filesystem은
 read-only이고 `/tmp`와 `/output`만 writable 경로다. Runtime probe는 `DISPLAY` 환경 변수,
 `/dev/dri` GPU device와 root 권한이 있으면 실패한다.
+
+## Live 실행
+
+TCP 수신과 HTTP preview를 함께 실행한다.
+
+```bash
+uv run lidar-visualizer live \
+  --tcp-host 127.0.0.1 \
+  --tcp-port 7000 \
+  --http-host 127.0.0.1 \
+  --http-port 8000
+```
+
+원본 기록을 활성화할 때는 출력 경로와 byte 및 record 한도를 모두 지정한다.
+
+```bash
+uv run lidar-visualizer live \
+  --tcp-host 127.0.0.1 \
+  --tcp-port 7000 \
+  --http-host 127.0.0.1 \
+  --http-port 8000 \
+  --record observations.ndjson \
+  --record-max-bytes 104857600 \
+  --record-max-records 100000
+```
+
+Browser는 `/`에서 화면, `/frame.png`에서 최신 frame, `/status`에서 수신 및 렌더링 상태를
+조회한다. HTTP 경계에는 인증과 TLS(Transport Layer Security)가 없으므로 제한된 개발
+network에서만 노출한다.
 
 ## 빌드와 검증
 

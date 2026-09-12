@@ -45,14 +45,14 @@ class ObservationReceiver:
         *,
         recorder: AsyncRecordWriter | None = None,
         header_timeout_s: float = 5.0,
-        on_observation: Callable[[ExecutionState], None] | None = None,
+        on_state: Callable[[ExecutionState], None] | None = None,
     ) -> None:
         if header_timeout_s <= 0:
             raise ValueError("header_timeout_s must be positive")
         self._parser = parser
         self._recorder = recorder
         self._header_timeout_s = header_timeout_s
-        self._on_observation = on_observation
+        self._on_state = on_state
         self._active = False
         self.state = ExecutionState()
         self.snapshot = ReceiverSnapshot()
@@ -103,8 +103,8 @@ class ObservationReceiver:
                 )
             if accepted_header:
                 self.state = disconnect(self.state).state
-                if self._on_observation is not None:
-                    self._on_observation(self.state)
+                if self._on_state is not None:
+                    self._on_state(self.state)
             self._active = False
             writer.close()
             await writer.wait_closed()
@@ -121,6 +121,8 @@ class ObservationReceiver:
                 raise _ConnectionRejected("first record must be a stream header")
             self.state = accept_header(self.state, parsed.value).state
             self._accept_raw(parsed.raw_line)
+            if self._on_state is not None:
+                self._on_state(self.state)
             return records[1:]
         raise _ConnectionRejected("connection ended before a stream header")
 
@@ -140,8 +142,8 @@ class ObservationReceiver:
             )
             return
         self._accept_raw(parsed.raw_line)
-        if self._on_observation is not None:
-            self._on_observation(self.state)
+        if self._on_state is not None:
+            self._on_state(self.state)
 
     def _accept_raw(self, raw_line: bytes) -> None:
         self.snapshot = replace(

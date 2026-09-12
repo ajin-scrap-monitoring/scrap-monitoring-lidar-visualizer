@@ -2,16 +2,18 @@
 
 ## 직접 의존성
 
-현재 직접 의존성은 런타임 7개, 빌드 및 개발 검사 6개와 GitHub Actions 3개로 총 16개다.
+현재 직접 의존성은 런타임 9개, 빌드 및 개발 검사 6개와 GitHub Actions 3개로 총 18개다.
 
 ### 런타임
 
 | 의존성 | 버전 | 목적 | 공식 출처 | 라이선스 |
 | --- | --- | --- | --- | --- |
 | Python | 3.14.7 | 애플리케이션 실행 | [Python](https://www.python.org/downloads/release/python-3147/) | PSF-2.0 |
+| FastAPI | 0.141.1 | HTTP preview application | [PyPI](https://pypi.org/project/fastapi/0.141.1/) | MIT |
 | jsonschema | 4.26.0 | 고정 계약 schema 검증 | [PyPI](https://pypi.org/project/jsonschema/4.26.0/) | MIT |
 | NumPy | 2.5.3 | 격자와 frame 수치 배열 | [PyPI](https://pypi.org/project/numpy/2.5.3/) | BSD-3-Clause |
 | PyVista | 0.49.0 | VTK 장면과 off-screen rendering 경계 | [PyPI](https://pypi.org/project/pyvista/0.49.0/) | MIT |
+| Uvicorn | 0.52.4 | HTTP preview ASGI server | [PyPI](https://pypi.org/project/uvicorn/0.52.4/) | BSD-3-Clause |
 | VTK | 9.7.0 | OSMesa 기반 3D rendering | [PyPI](https://pypi.org/project/vtk/9.7.0/) | BSD-3-Clause |
 | FFmpeg 및 ffprobe | 5.1.9-0+deb12u1 | H.264 MP4 encoding과 구조 검사 | [Debian](https://packages.debian.org/bookworm/ffmpeg) | GPL-2.0-or-later |
 | Mesa libosmesa6 | 22.3.6-1+deb12u2 | CPU 기반 OpenGL context | [Debian](https://packages.debian.org/bookworm/libosmesa6) | MIT 및 구성 요소별 라이선스 |

@@ -44,6 +44,13 @@ docker run "${runtime_options[@]}" \
   -m scrap_monitoring_lidar_visualizer.rendering.probe \
   --output /output/scene
 
+docker run "${runtime_options[@]}" \
+  --mount "type=bind,source=${probe_root}/output,target=/output" \
+  --entrypoint python \
+  "${image}" \
+  -m scrap_monitoring_lidar_visualizer.live_probe \
+  --output /output/live
+
 test "$(jq -r '.display_present' "${probe_root}/output/probe/probe.json")" = "false"
 test "$(jq -r '.euid' "${probe_root}/output/probe/probe.json")" = "10001"
 test "$(jq -r '.gpu_device_present' "${probe_root}/output/probe/probe.json")" = "false"
@@ -61,6 +68,15 @@ test "$(jq -r '.height' "${probe_root}/output/scene/scene.json")" = "360"
 test "$(jq -r '.surface_faces > 0' "${probe_root}/output/scene/scene.json")" = "true"
 test -s "${probe_root}/output/scene/scene.png"
 test -s "${probe_root}/output/scene/scene-top.png"
+test "$(jq -r '.frame_before_observation' "${probe_root}/output/live/live.json")" = "204"
+test "$(jq -r '.tcp_response_bytes' "${probe_root}/output/live/live.json")" = "0"
+test "$(jq -r '.frame_status' "${probe_root}/output/live/live.json")" = "200"
+test "$(jq -r '.status_code' "${probe_root}/output/live/live.json")" = "200"
+test "$(jq -r '.root_status' "${probe_root}/output/live/live.json")" = "200"
+test "$(jq -r '.root_has_preview' "${probe_root}/output/live/live.json")" = "true"
+test "$(jq -r '.received_sequence' "${probe_root}/output/live/live.json")" = "1"
+test "$(jq -r '.rendered_sequence' "${probe_root}/output/live/live.json")" = "1"
+test -s "${probe_root}/output/live/live.png"
 
 benchmark_json="$(
   docker run "${runtime_options[@]}" \
