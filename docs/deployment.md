@@ -101,7 +101,17 @@ digest를 전체 컨테이너 검사에 사용한다. Package 공개 범위를 �
 archive, image digest, release metadata, 의존성 inventory, 고지와 SHA-256 checksum을 draft
 Release에 올리고 최종 게시한다.
 
-공개 image는 Release의 `oci-image.txt`에 기록된 digest로 실행한다.
+[v0.1.0 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/releases/tag/v0.1.0)는
+source commit `866e3f1e2c9fa997879b9ad3659e168ab9259147`에서 생성됐다. Release asset 7개의
+SHA-256 checksum, Python package metadata, SLSA(Supply-chain Levels for Software Artifacts)
+provenance와 SPDX(Software Package Data Exchange) 2.3 SBOM을 검증했다. Package는 Public이며
+인증 정보가 없는 Docker 설정으로 digest image를 가져올 수 있다.
+
+현재 배포 image는 다음 불변 참조를 사용한다.
+
+```text
+ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:8573c8dea619dac0d7d18656695698abdace5eea93d653c15558bb289fa0301c
+```
 
 ```bash
 docker run --rm \
@@ -112,7 +122,7 @@ docker run --rm \
   --tmpfs /tmp:rw,noexec,nosuid,size=64m \
   --publish 7000:7000 \
   --publish 8000:8000 \
-  ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:<digest> \
+  ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:8573c8dea619dac0d7d18656695698abdace5eea93d653c15558bb289fa0301c \
   live \
   --tcp-host 0.0.0.0 \
   --tcp-port 7000 \
