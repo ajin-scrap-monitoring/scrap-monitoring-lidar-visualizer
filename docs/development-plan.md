@@ -8,10 +8,9 @@
 
 ## 현재 상태
 
-P7 컨테이너와 릴리스 검증은
-[이슈 #19](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/issues/19)에서 관리한다.
-최종 Linux AMD64 image와 tag 기반 Release workflow를 검증하고 있다. TCP 수신, 제한된 기록,
-최신 live snapshot과 기록 재생은 browser preview와 H.264 MP4 출력에 연결된다.
+P0부터 P7까지 구현과 검증이 완료됐다. [v0.1.0 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/releases/tag/v0.1.0)는
+Linux AMD64 image, Python package, 의존성 inventory, 고지와 checksum을 제공한다. Public GHCR
+image의 manifest digest는 `sha256:8573c8dea619dac0d7d18656695698abdace5eea93d653c15558bb289fa0301c`다.
 
 고정 계약의 원본과 해시는 [provenance.json](../contracts/observation/v1/provenance.json)에
 있다. 해당 사본은 로컬 생성기 저장소의 지정 commit에서 가져온 공개 합성 계약이다.
@@ -32,11 +31,10 @@ Schema가 표현하지 않는 조건과 명세의 추가 수신 및 preview 요�
 | P4 | 결정론적인 mesh와 장면 렌더링 | P1, P2 | 완료 |
 | P5 | Live CLI(Command-Line Interface)와 HTTP(Hypertext Transfer Protocol) preview 통합 | P3, P4 | 완료 |
 | P6 | 기록 재생과 MP4 출력 | P3, P4, P5 | 완료 |
-| P7 | 컨테이너 및 릴리스 검증 | P5, P6 | 진행 중 |
+| P7 | 컨테이너 및 릴리스 검증 | P5, P6 | 완료 |
 
-P7은 최종 container 실행 경계, 릴리스 workflow, 배포 산출물과 의존성 고지를 검증한다.
-P1에서 고정한 Python, OSMesa와 FFmpeg 조합 및 자원 기준은 [실행 환경](deployment.md)을
-따른다.
+현재 단계의 구현 작업은 모두 완료됐다. P1에서 고정한 Python, OSMesa와 FFmpeg 조합 및
+자원 기준은 [실행 환경](deployment.md)을 따른다.
 
 ## P0. 프로젝트 기준 구성
 
