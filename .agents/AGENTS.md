@@ -8,9 +8,12 @@
 에이전트 진입점 3개는 `AGENTS.md`, `GEMINI.md`, `.claude/CLAUDE.md`이며 모두 이 파일의
 심링크다. 진입점에 별도 지침을 작성하지 않는다.
 
+Antigravity는 `.agents/rules/project.md`의 Always On 규칙에서 이 파일을 참조한다.
+도구별 규칙 파일에는 프로젝트 지침을 복제하지 않는다.
+
 ## 문서 정본
 
-프로젝트 입력과 설계의 정본은 다음 4개다.
+프로젝트 입력, 설계와 검증의 정본은 다음 5개다.
 
 | 문서 | 책임 |
 | --- | --- |
@@ -18,6 +21,7 @@
 | [아키텍처](../docs/architecture.md) | 채택한 설계, 모듈 경계와 내부 처리 정책 |
 | [개발 계획](../docs/development-plan.md) | 현재 구현 상태, 작업 순서와 단계별 검증 |
 | [계약 출처](../contracts/observation/v1/provenance.json) | 고정 계약 사본의 원본, commit과 파일 해시 |
+| [검증 환경](../docs/dependencies.md) | 현재 검증 도구의 의존성과 실행 방법 |
 
 작업을 시작할 때 명세와 개발 계획을 읽고 해당 작업의 아키텍처 경계를 확인한다.
 `docs/project-spec.md`는 고정 입력이므로 구현 과정에서 수정하지 않는다. 설계와 구현 상태가
@@ -39,8 +43,8 @@ GitHub 작업 전에 관련 원문의 최신 내용을 확인한다. 이슈는 �
 [공통 양식](https://github.com/ajin-scrap-monitoring/.github/tree/main/.github/ISSUE_TEMPLATE)을
 사용한다. 공통 운영 문서와 템플릿은 이 저장소에 복제하지 않는다.
 
-저장소 설정과 ruleset 적용은 사용자가 담당한다. 초기 설정 단계에서는 변경과 검증을
-작업 브랜치 및 PR에 준비하고, 사용자의 명시적인 병합 요청 전에는 `main`에 반영하지 않는다.
+저장소 설정과 ruleset은 조직의 적용 순서를 따른다. 사용자가 승인한 변경과 병합 범위 안에서
+작업하며 검증을 우회하거나 원격 `main`에 직접 Push하지 않는다.
 
 ## 코드와 입력 경계
 
@@ -63,8 +67,8 @@ GitHub 작업 전에 관련 원문의 최신 내용을 확인한다. 이슈는 �
 변경 범위에 해당하는 개발 계획의 완료 조건을 검증한다. 실행하지 않은 검사나 준비만 된
 구현을 완료로 표시하지 않는다. 작업 결과에는 검증 결과와 남은 선행 조건을 포함한다.
 
-에이전트 구조를 변경하면 저장소 루트에서 다음 명령을 실행한다.
+에이전트 구조와 계약을 변경하면 저장소 루트에서 다음 명령을 실행한다.
 
 ```bash
-~/.config/agents/bin/check-agent-project "$PWD"
+.venv/bin/python tools/check_repository.py
 ```
