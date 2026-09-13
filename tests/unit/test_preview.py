@@ -40,11 +40,13 @@ async def _request(port: int, path: str) -> tuple[int, dict[str, str], bytes]:
 def test_latest_frame_store_replaces_without_history() -> None:
     store = LatestFrameStore()
 
-    first = store.publish(b"first", run_id="run", sequence=1)
-    second = store.publish(b"second", run_id="run", sequence=2)
+    first = store.publish(b"first", b"first top", run_id="run", sequence=1)
+    second = store.publish(b"second", b"second top", run_id="run", sequence=2)
 
     assert first.revision == 1
+    assert first.top_png == b"first top"
     assert second.revision == 2
+    assert second.top_png == b"second top"
     assert store.get() == second
     store.clear()
     assert store.get() is None
@@ -78,6 +80,7 @@ def test_renderer_invalidation_discards_previous_run_outcome() -> None:
             run_id="old-run",
             sequence=9,
             png=b"old frame",
+            top_png=b"old top frame",
             error=None,
         )
     )
@@ -112,6 +115,7 @@ def test_renderer_sends_latest_pending_request_after_inflight_finishes() -> None
             run_id="old-run",
             sequence=1,
             png=None,
+            top_png=None,
             error="old renderer error",
         )
     )
@@ -146,8 +150,16 @@ def test_preview_http_endpoints_return_latest_frame() -> None:
             assert body == b""
             assert headers["cache-control"] == "no-store"
 
+            status, headers, body = await _request(port, "/frame-top.png")
+            assert status == 204
+            assert body == b""
+            assert headers["cache-control"] == "no-store"
+
             frames.publish(
-                b"\x89PNG\r\n\x1a\nframe", run_id="run-a\nunsafe", sequence=7
+                b"\x89PNG\r\n\x1a\nframe",
+                b"\x89PNG\r\n\x1a\ntop-frame",
+                run_id="run-a\nunsafe",
+                sequence=7,
             )
             status, headers, body = await _request(port, "/frame.png")
             assert status == 200
@@ -157,6 +169,13 @@ def test_preview_http_endpoints_return_latest_frame() -> None:
             assert headers["x-sequence"] == "7"
             assert body.startswith(b"\x89PNG")
 
+            status, headers, body = await _request(port, "/frame-top.png")
+            assert status == 200
+            assert headers["content-type"] == "image/png"
+            assert headers["x-frame-revision"] == "1"
+            assert headers["x-sequence"] == "7"
+            assert body == b"\x89PNG\r\n\x1a\ntop-frame"
+
             status, _, body = await _request(port, "/status")
             assert status == 200
             assert b'"frame_revision":1' in body
@@ -165,6 +184,7 @@ def test_preview_http_endpoints_return_latest_frame() -> None:
             status, _, body = await _request(port, "/")
             assert status == 200
             assert b"/frame.png?revision=" in body
+            assert b"/frame-top.png?revision=" in body
         finally:
             server.should_exit = True
             await task

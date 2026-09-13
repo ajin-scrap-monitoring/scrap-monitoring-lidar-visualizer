@@ -26,8 +26,9 @@ EXPECTED_RENDER_WINDOW = "vtkOSOpenGLRenderWindow"
 BACKGROUND_COLOR = "#E8EEF4"
 FLOOR_COLOR = "#BCC8D6"
 WALL_COLOR = "#7890A8"
-MESH_EDGE_COLOR = "#334155"
-SURFACE_COLOR = "#D39B42"
+MESH_EDGE_COLOR = "#454545"
+HEIGHT_COLOR_MAP: Literal["YlOrRd"] = "YlOrRd"
+HEIGHT_SCALAR_NAME = "height_m"
 SENSOR_COLOR = "#1677B8"
 ACTIVE_INLET_COLOR = "#C62828"
 INACTIVE_INLET_COLOR = "#2E7D32"
@@ -56,6 +57,8 @@ class RenderResult:
     parallel_projection: bool
     surface_vertices: int
     surface_faces: int
+    volume_side_faces: int
+    height_range_m: tuple[float, float]
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,6 +101,14 @@ def _poly_data(mesh: Mesh) -> pv.PolyData:
         [value for face in mesh.faces for value in (3, *face)], dtype=np.int64
     )
     return pv.PolyData(vertices, faces)
+
+
+def _height_poly_data(mesh: Mesh) -> pv.PolyData:
+    data = _poly_data(mesh)
+    data.point_data[HEIGHT_SCALAR_NAME] = np.asarray(
+        [vertex[2] for vertex in mesh.vertices], dtype=np.float64
+    )
+    return data
 
 
 def _camera_position(
@@ -212,12 +223,35 @@ def render_scene(
             opacity=0.3,
             show_edges=True,
         )
+        if geometry.volume_sides.faces:
+            plotter.add_mesh(
+                _height_poly_data(geometry.volume_sides),
+                scalars=HEIGHT_SCALAR_NAME,
+                cmap=HEIGHT_COLOR_MAP,
+                clim=(header.scene.floor_z_m, header.scene.top_z_m),
+                smooth_shading=False,
+                show_scalar_bar=False,
+            )
         plotter.add_mesh(
-            _poly_data(geometry.surface),
-            color=SURFACE_COLOR,
+            _height_poly_data(geometry.surface),
+            scalars=HEIGHT_SCALAR_NAME,
+            cmap=HEIGHT_COLOR_MAP,
+            clim=(header.scene.floor_z_m, header.scene.top_z_m),
             edge_color=MESH_EDGE_COLOR,
             smooth_shading=False,
             show_edges=True,
+            scalar_bar_args={
+                "title": "Surface height (m)",
+                "color": OVERLAY_COLOR,
+                "fmt": "%.2f",
+                "title_font_size": 12,
+                "label_font_size": 10,
+                "vertical": True,
+                "position_x": 0.88,
+                "position_y": 0.2,
+                "width": 0.06,
+                "height": 0.55,
+            },
         )
         x_values = tuple(point[0] for point in header.scene.boundary_xy_m)
         y_values = tuple(point[1] for point in header.scene.boundary_xy_m)
@@ -273,4 +307,6 @@ def render_scene(
         parallel_projection=parallel_projection,
         surface_vertices=len(geometry.surface.vertices),
         surface_faces=len(geometry.surface.faces),
+        volume_side_faces=len(geometry.volume_sides.faces),
+        height_range_m=(header.scene.floor_z_m, header.scene.top_z_m),
     )

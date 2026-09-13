@@ -270,6 +270,7 @@ def render_png_frames(
                     config=config,
                     temp_dir=temp_dir,
                     connection_label="replay",
+                    render_top_view=False,
                 )
             )
             deadline = time.monotonic() + timeout_s

@@ -29,6 +29,7 @@ class SceneGeometry:
     floor: Mesh
     walls: Mesh
     surface: Mesh
+    volume_sides: Mesh
 
 
 class _MeshBuilder:
@@ -243,6 +244,29 @@ def _surface_triangles(
     return tuple(triangles)
 
 
+def _build_volume_sides(surface: Mesh, floor_z_m: float) -> Mesh:
+    edge_counts: dict[tuple[int, int], int] = {}
+    oriented_edges: dict[tuple[int, int], tuple[int, int]] = {}
+    for face in surface.faces:
+        for edge_start, edge_end in zip(face, face[1:] + face[:1], strict=True):
+            key = (min(edge_start, edge_end), max(edge_start, edge_end))
+            edge_counts[key] = edge_counts.get(key, 0) + 1
+            oriented_edges.setdefault(key, (edge_start, edge_end))
+
+    builder = _MeshBuilder()
+    for key in sorted(edge_counts):
+        if edge_counts[key] != 1:
+            continue
+        start_index, end_index = oriented_edges[key]
+        top_start = surface.vertices[start_index]
+        top_end = surface.vertices[end_index]
+        lower_start = (top_start[0], top_start[1], floor_z_m)
+        lower_end = (top_end[0], top_end[1], floor_z_m)
+        builder.triangle(top_start, lower_start, lower_end)
+        builder.triangle(top_start, lower_end, top_end)
+    return builder.build()
+
+
 def build_scene_geometry(header: Header, observation: Observation) -> SceneGeometry:
     if observation.run_id != header.run_id:
         raise ValueError("observation run_id does not match header")
@@ -277,8 +301,10 @@ def build_scene_geometry(header: Header, observation: Observation) -> SceneGeome
                 surface_builder,
                 _clip_triangle(source_triangle, boundary_triangle, operation_count),
             )
+    surface = surface_builder.build()
     return SceneGeometry(
         floor=floor_builder.build(),
         walls=wall_builder.build(),
-        surface=surface_builder.build(),
+        surface=surface,
+        volume_sides=_build_volume_sides(surface, header.scene.floor_z_m),
     )
