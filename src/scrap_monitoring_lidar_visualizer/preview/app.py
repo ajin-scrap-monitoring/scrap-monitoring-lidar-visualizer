@@ -44,17 +44,20 @@ _INDEX_HTML = """<!doctype html>
 const frame=document.getElementById("frame");
 const topFrame=document.getElementById("top-frame");
 const statusNode=document.getElementById("status");
+let displayedRevision=null;
 async function refresh(){
   try{
     const response=await fetch("/status",{cache:"no-store"});
     const status=await response.json();
     statusNode.textContent=JSON.stringify(status,null,2);
-    if(status.frame_revision!==null){
+    if(status.frame_revision!==null&&status.frame_revision!==displayedRevision){
       frame.src="/frame.png?revision="+status.frame_revision;
       topFrame.src="/frame-top.png?revision="+status.frame_revision;
-    }else{
+      displayedRevision=status.frame_revision;
+    }else if(status.frame_revision===null){
       frame.removeAttribute("src");
       topFrame.removeAttribute("src");
+      displayedRevision=null;
     }
   }catch(error){statusNode.textContent=String(error);}
   setTimeout(refresh,500);

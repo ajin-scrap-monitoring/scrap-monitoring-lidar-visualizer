@@ -43,7 +43,6 @@ def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:
         geometry,
         config=RenderConfig(),
         connected=True,
-        missing_sequences=0,
     )
     top_png, _ = render_scene(
         records[0],
@@ -51,7 +50,6 @@ def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:
         geometry,
         config=RenderConfig(camera="top"),
         connected=False,
-        missing_sequences=2,
     )
     (output_dir / "scene.png").write_bytes(png)
     (output_dir / "scene-top.png").write_bytes(top_png)

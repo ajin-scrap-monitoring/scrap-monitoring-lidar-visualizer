@@ -12,9 +12,9 @@ Visualizer는 모니터, `DISPLAY`와 GPU(Graphics Processing Unit)가 없는 Co
 ## 주요 기능
 
 - TCP(Transmission Control Protocol) 기반 Observation version 1 수신과 계약 검증
-- 적재 공간, 닫힌 적재 체적, sensor와 투입구의 결정론적인 3D mesh 렌더링
+- 적재 공간, 닫힌 적재 체적과 투입구의 결정론적인 3D mesh 렌더링
 - 1280 x 720 기본 프레임, smooth shading과 중립색 형상 격자
-- 제목과 눈금이 분리된 고정 높이 색상 범례
+- 적재물 높이에 따른 고정 색상과 외벽 우측 변의 2 m 높이 눈금
 - 최신 사선 프레임, 상면 높이 지도와 상태를 제공하는 Browser 기반 Live preview
 - Linux AMD64 비root Container와 Public GHCR(GitHub Container Registry) 이미지
 
@@ -117,6 +117,28 @@ DNS(Domain Name System) 이름 또는 IP 주소여야 한다. 실제 사설 주�
 `/status`의 `received_sequence`와 `rendered_sequence`가 같은 값이면 최신 수신 관찰이 화면에
 반영된 상태다. 연결이 끊기면 마지막 정상 관찰 화면에 disconnected 상태를 표시하고 같은
 TCP port에서 다음 연결을 기다린다.
+
+프레임 왼쪽 위에는 `sequence`, `elapsed_s`, `surface_fill_ratio`, `phase`, `cycle_index`와
+`connection`을 표시한다. Sensor는 입력 계약으로 검증하지만 프레임에는 표시하지 않는다.
+적재물의 노랑-주황-적색은 높이에 따라 고정되고, 사선 프레임은 화면상 가장 오른쪽 외벽 변에
+2 m 간격 높이 눈금을 표시한다. 상면 높이 지도에는 겹침을 피하기 위해 수직 눈금을 표시하지
+않는다.
+
+`GET /status`의 JSON 필드는 다음 11개다.
+
+| 필드 | 의미 |
+| --- | --- |
+| `connected` | Generator TCP 연결 상태 |
+| `run_id` | 현재 실행 식별자 |
+| `received_sequence` | 마지막으로 수신한 Observation sequence |
+| `missing_sequences` | 현재 실행에서 누적된 sequence 누락 수 |
+| `connection_index` | 수락한 연결의 누적 순번 |
+| `last_valid_received_at` | 마지막 정상 Observation 수신 시각 |
+| `records_accepted` | 수락한 Header와 Observation 누적 수 |
+| `records_rejected` | 거부한 Observation 누적 수 |
+| `render_error` | 마지막 렌더링 오류 또는 `null` |
+| `frame_revision` | Browser에 제공하는 프레임 revision |
+| `rendered_sequence` | 현재 프레임에 반영된 Observation sequence |
 
 ## 개발 및 검증
 

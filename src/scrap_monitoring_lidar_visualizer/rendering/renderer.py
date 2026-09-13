@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from io import BytesIO
 from typing import Literal
@@ -9,12 +10,10 @@ from typing import Literal
 import numpy as np
 import pyvista as pv
 from PIL import Image
-from pyvista.plotting._typing import ScalarBarArgs
 
 from scrap_monitoring_lidar_visualizer.contracts.models import (
     Header,
     Observation,
-    Sensor,
 )
 from scrap_monitoring_lidar_visualizer.geometry import Mesh, SceneGeometry
 from scrap_monitoring_lidar_visualizer.limits import (
@@ -32,20 +31,7 @@ MESH_EDGE_COLOR = "#454545"
 OVERLAY_COLOR = "#111827"
 HEIGHT_COLOR_MAP: Literal["YlOrRd"] = "YlOrRd"
 HEIGHT_SCALAR_NAME = "height_m"
-HEIGHT_LEGEND_TITLE = "Surface height (m)"
-HEIGHT_SCALAR_BAR_ARGS: ScalarBarArgs = {
-    "title": "",
-    "color": OVERLAY_COLOR,
-    "fmt": "%.2f",
-    "n_labels": 5,
-    "label_font_size": 12,
-    "vertical": True,
-    "position_x": 0.9,
-    "position_y": 0.15,
-    "width": 0.045,
-    "height": 0.58,
-}
-SENSOR_COLOR = "#1677B8"
+HEIGHT_TICK_INTERVAL_M = 2.0
 ACTIVE_INLET_COLOR = "#C62828"
 INACTIVE_INLET_COLOR = "#2E7D32"
 
@@ -86,6 +72,13 @@ class SceneDescription:
     active_inlet_index: int | None
 
 
+@dataclass(frozen=True, slots=True)
+class HeightScale:
+    line_points: tuple[tuple[float, float, float], ...]
+    label_points: tuple[tuple[float, float, float], ...]
+    labels: tuple[str, ...]
+
+
 def _apply_camera(
     plotter: pv.Plotter,
     camera_position: tuple[
@@ -99,13 +92,79 @@ def _apply_camera(
     plotter.enable_parallel_projection()  # type: ignore[call-arg]
 
 
-def _sensor_rotation_axis(sensor: Sensor) -> tuple[float, float, float]:
-    u0_x, u0_y, u0_z = sensor.u0
-    u90_x, u90_y, u90_z = sensor.u90
-    return (
-        u0_y * u90_z - u0_z * u90_y,
-        u0_z * u90_x - u0_x * u90_z,
-        u0_x * u90_y - u0_y * u90_x,
+def _height_tick_levels(floor_z_m: float, top_z_m: float) -> tuple[float, ...]:
+    levels = [floor_z_m]
+    level = math.ceil(floor_z_m / HEIGHT_TICK_INTERVAL_M) * HEIGHT_TICK_INTERVAL_M
+    if math.isclose(level, floor_z_m, rel_tol=0.0, abs_tol=1e-9):
+        level += HEIGHT_TICK_INTERVAL_M
+    while level < top_z_m - 1e-9:
+        levels.append(level)
+        level += HEIGHT_TICK_INTERVAL_M
+    if not math.isclose(levels[-1], top_z_m, rel_tol=0.0, abs_tol=1e-9):
+        levels.append(top_z_m)
+    return tuple(levels)
+
+
+def _format_height(level: float) -> str:
+    normalized = 0.0 if math.isclose(level, 0.0, abs_tol=1e-9) else level
+    return f"{normalized:g} m"
+
+
+def _height_scale(
+    header: Header,
+    camera_position: tuple[
+        tuple[float, float, float],
+        tuple[float, float, float],
+        tuple[float, float, float],
+    ],
+) -> HeightScale:
+    eye, focal, view_up = (
+        np.asarray(point, dtype=np.float64) for point in camera_position
+    )
+    view_direction = focal - eye
+    screen_right = np.cross(view_direction, np.asarray(view_up, dtype=np.float64))
+    screen_right[2] = 0.0
+    screen_right /= np.linalg.norm(screen_right)
+    right_x, right_y = float(screen_right[0]), float(screen_right[1])
+    edge_x, edge_y = max(
+        header.scene.boundary_xy_m,
+        key=lambda point: (point[0] * right_x + point[1] * right_y, point),
+    )
+    x_span = max(point[0] for point in header.scene.boundary_xy_m) - min(
+        point[0] for point in header.scene.boundary_xy_m
+    )
+    y_span = max(point[1] for point in header.scene.boundary_xy_m) - min(
+        point[1] for point in header.scene.boundary_xy_m
+    )
+    z_span = header.scene.top_z_m - header.scene.floor_z_m
+    tick_length = 0.025 * max(x_span, y_span, z_span, 1.0)
+    label_offset = 2.2 * tick_length
+    levels = _height_tick_levels(
+        header.scene.floor_z_m,
+        header.scene.top_z_m,
+    )
+    axis_start = (edge_x, edge_y, header.scene.floor_z_m)
+    axis_end = (edge_x, edge_y, header.scene.top_z_m)
+    tick_points = tuple(
+        point
+        for level in levels
+        for point in (
+            (edge_x, edge_y, level),
+            (edge_x + right_x * tick_length, edge_y + right_y * tick_length, level),
+        )
+    )
+    label_points = tuple(
+        (
+            edge_x + right_x * label_offset,
+            edge_y + right_y * label_offset,
+            level,
+        )
+        for level in levels
+    )
+    return HeightScale(
+        line_points=(axis_start, axis_end, *tick_points),
+        label_points=label_points,
+        labels=tuple(_format_height(level) for level in levels),
     )
 
 
@@ -155,20 +214,17 @@ def _overlay(
     observation: Observation,
     *,
     connected: bool,
-    missing_sequences: int,
 ) -> str:
     scenario = observation.scenario
     connection = "connected" if connected else "disconnected"
     return "\n".join(
         (
-            f"run: {observation.run_id}",
             f"sequence: {observation.sequence}",
             f"elapsed_s: {scenario.elapsed_s:.3f}",
             f"surface_fill_ratio: {scenario.surface_fill_ratio:.4f}",
             f"phase: {scenario.phase}",
             f"cycle_index: {scenario.cycle_index}",
             f"connection: {connection}",
-            f"missing_sequences: {missing_sequences}",
         )
     )
 
@@ -179,7 +235,6 @@ def describe_scene(
     *,
     config: RenderConfig,
     connected: bool,
-    missing_sequences: int,
 ) -> SceneDescription:
     config.validate()
     active_inlet = (
@@ -192,7 +247,6 @@ def describe_scene(
         overlay=_overlay(
             observation,
             connected=connected,
-            missing_sequences=missing_sequences,
         ),
         active_inlet_index=active_inlet,
     )
@@ -205,7 +259,6 @@ def render_scene(
     *,
     config: RenderConfig | None = None,
     connected: bool,
-    missing_sequences: int,
 ) -> tuple[bytes, RenderResult]:
     config = config or RenderConfig()
     config.validate()
@@ -214,7 +267,6 @@ def render_scene(
         observation,
         config=config,
         connected=connected,
-        missing_sequences=missing_sequences,
     )
     plotter = pv.Plotter(off_screen=True, window_size=[config.width, config.height])
     plotter.set_background(BACKGROUND_COLOR)  # type: ignore[arg-type]
@@ -244,28 +296,31 @@ def render_scene(
             edge_color=MESH_EDGE_COLOR,
             smooth_shading=True,
             show_edges=True,
-            scalar_bar_args=HEIGHT_SCALAR_BAR_ARGS,
+            show_scalar_bar=False,
         )
-        plotter.add_text(
-            HEIGHT_LEGEND_TITLE,
-            position="upper_right",
-            font_size=10,
-            color=OVERLAY_COLOR,
-        )
+        if config.camera == "isometric":
+            height_scale = _height_scale(header, description.camera_position)
+            plotter.add_lines(
+                np.asarray(height_scale.line_points),
+                color=OVERLAY_COLOR,
+                width=2,
+            )
+            plotter.add_point_labels(
+                height_scale.label_points,
+                height_scale.labels,
+                bold=False,
+                font_size=10,
+                text_color=OVERLAY_COLOR,
+                show_points=False,
+                shape=None,
+                always_visible=True,
+                justification_horizontal="left",
+            )
         x_values = tuple(point[0] for point in header.scene.boundary_xy_m)
         y_values = tuple(point[1] for point in header.scene.boundary_xy_m)
         marker_scale = max(
             max(x_values) - min(x_values), max(y_values) - min(y_values), 1.0
         )
-        for sensor in header.scene.sensors:
-            plotter.add_mesh(
-                pv.Arrow(
-                    start=sensor.p0_m,
-                    direction=_sensor_rotation_axis(sensor),
-                    scale=0.2 * marker_scale,
-                ),
-                color=SENSOR_COLOR,
-            )
         for index, inlet in enumerate(header.scene.inlet_positions_xy_m):
             color = (
                 ACTIVE_INLET_COLOR
