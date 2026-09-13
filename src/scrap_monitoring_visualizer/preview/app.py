@@ -22,7 +22,6 @@ _INDEX_HTML = """<!doctype html>
   <style>
     body{margin:0;background:#f4f6f8;color:#202124;font:14px sans-serif}
     main{max-width:1400px;margin:auto;padding:24px}
-    .views{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:16px}
     figure{margin:0}
     figcaption{font-weight:600;margin:0 0 8px}
     img{display:block;width:100%;background:#fff;border:1px solid #9aa0a6}
@@ -31,18 +30,12 @@ _INDEX_HTML = """<!doctype html>
 </head>
 <body><main>
   <h1>Scrap Monitoring Visualizer</h1>
-  <div class="views">
-    <figure><figcaption>Configured view</figcaption>
-      <img id="frame" alt="Latest rendered observation">
-    </figure>
-    <figure><figcaption>Top height map</figcaption>
-      <img id="top-frame" alt="Latest top height map">
-    </figure>
-  </div>
+  <figure><figcaption>3D model</figcaption>
+    <img id="frame" alt="Latest rendered observation">
+  </figure>
   <pre id="status">Waiting for server status.</pre>
 </main><script>
 const frame=document.getElementById("frame");
-const topFrame=document.getElementById("top-frame");
 const statusNode=document.getElementById("status");
 let displayedRevision=null;
 async function refresh(){
@@ -52,11 +45,9 @@ async function refresh(){
     statusNode.textContent=JSON.stringify(status,null,2);
     if(status.frame_revision!==null&&status.frame_revision!==displayedRevision){
       frame.src="/frame.png?revision="+status.frame_revision;
-      topFrame.src="/frame-top.png?revision="+status.frame_revision;
       displayedRevision=status.frame_revision;
     }else if(status.frame_revision===null){
       frame.removeAttribute("src");
-      topFrame.removeAttribute("src");
       displayedRevision=null;
     }
   }catch(error){statusNode.textContent=String(error);}
@@ -127,21 +118,6 @@ def create_preview_app(
             return Response(status_code=204, headers={"Cache-Control": "no-store"})
         return Response(
             snapshot.png,
-            media_type="image/png",
-            headers={
-                "Cache-Control": "no-store",
-                "X-Frame-Revision": str(snapshot.revision),
-                "X-Sequence": str(snapshot.sequence),
-            },
-        )
-
-    @app.get("/frame-top.png")
-    async def top_frame() -> Response:
-        snapshot = frames.get()
-        if snapshot is None:
-            return Response(status_code=204, headers={"Cache-Control": "no-store"})
-        return Response(
-            snapshot.top_png,
             media_type="image/png",
             headers={
                 "Cache-Control": "no-store",

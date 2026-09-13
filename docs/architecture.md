@@ -6,9 +6,10 @@
 [프로젝트 명세](project-spec.md), 현재 구현 상태와 검증 순서는
 [개발 계획](development-plan.md)에서 관리한다.
 
-현재 제품 실행 경계는 TCP 관찰 수신과 Browser 기반 Live preview다. 관찰 기록, Replay와
-영상 출력은 제공하지 않는다. 고정 입력인 프로젝트 명세에는 해당 기능이 남아 있으므로 현재
-구현 범위와 다른 항목은 개발 계획에 명시한다.
+현재 제품 실행 경계는 TCP 관찰 수신과 고정 사선 프레임 하나를 제공하는 Browser 기반 Live
+preview다. 관찰 기록, Replay, 영상 출력과 상면 camera는 제공하지 않는다. 고정 입력인
+프로젝트 명세에는 해당 기능이 남아 있으므로 현재 구현 범위와 다른 항목은 개발 계획에
+명시한다.
 
 ## 모듈 경계
 
@@ -67,10 +68,10 @@ PyVista의 off-screen rendering은 VTK의 `vtkOSOpenGLRenderWindow`와 Mesa `lib
 | 실행 단위 | 담당 작업 |
 | --- | --- |
 | 주 process | CLI, 비동기 수신, 실행 상태와 HTTP preview 관리 |
-| 렌더링 자식 process | Mesh와 장면의 사선 및 상면 프레임 생성 |
+| 렌더링 자식 process | Mesh와 장면의 고정 사선 프레임 생성 |
 
 생성기가 Observation을 전송하면 주 process가 레코드를 검증하고 최신 실행 상태를 갱신한다.
-렌더링 자식 process가 완성한 사선 프레임과 상면 프레임은 하나의 revision으로 교체된다.
+렌더링 자식 process가 완성한 사선 프레임은 하나의 revision으로 교체된다.
 
 ```text
 Generator -> Receiver -> Validator -> State -> Latest snapshot -> Renderer
@@ -94,7 +95,7 @@ Browser <- HTTP preview <--------------------------------------------+
 | --- | --- | --- |
 | 실행 상태 | Header와 최신 Observation 각 1개 | 새 실행 또는 최신 Observation으로 교체 |
 | 렌더링 처리 및 대기 snapshot | 처리 중 1개와 대기 1개 | 대기 상태를 새 관찰로 교체 |
-| Preview 프레임 묶음 | 설정 camera와 상면 PNG 각 1개 | 두 프레임과 식별 정보를 함께 교체 |
+| Preview 프레임 | PNG 1개 | 새 프레임과 식별 정보로 교체 |
 
 HTTP 요청은 동시에 최대 16개를 처리하고 요청 제한 시간은 5초다. 초과 요청은 거부하고
 지연 연결은 종료한다. Mesh 생성에는 node, face와 clipping 연산량의 유한한 예산을 둔다.
@@ -139,29 +140,28 @@ Geometry는 polygon의 방향과 시작 vertex를 정규화하고 고정 순서�
 수거가 끝나 모든 표면 높이가 바닥 높이와 같으면 퇴화한 옆면은 생성하지 않는다. Sensor는
 입력 계약 검증에만 사용하고 장면에는 표시하지 않는다.
 
-사선과 상면 camera는 거리에 따른 크기 변화를 제거한 직교 투영을 사용한다. 기본 프레임은
+고정 사선 camera는 거리에 따른 크기 변화를 제거한 직교 투영을 사용한다. 기본 프레임은
 1280 x 720이다. 적재 표면은 smooth shading과 회색 mesh edge를 함께 적용한다. 적재 표면과
 체적 옆면은 `floor_z_m`부터 `top_z_m`까지 고정한 노랑-주황-적색 높이 색상을 사용한다.
-색상 막대는 표시하지 않는다. 사선 camera의 화면 오른쪽 방향으로 가장 멀리 있는 외벽 수직
-변에 바닥과 외벽 상단을 포함한 2 m 간격 높이 눈금을 표시한다. 상면 camera에는 수직 눈금을
-표시하지 않는다.
+색상 막대는 표시하지 않는다. 화면 오른쪽 방향으로 가장 멀리 있는 외벽 수직 변에 바닥과
+외벽 상단을 포함한 2 m 간격 높이 눈금을 표시한다. 눈금 숫자는 프레임 높이에 맞춰 16부터
+28까지 조정한다.
 
 ## Preview 인터페이스
 
-Preview 경로는 다음 4개다.
+Preview 경로는 다음 3개다.
 
 | 경로 | 응답 |
 | --- | --- |
 | `GET /` | 서버 프레임과 상태를 표시하는 브라우저 화면 |
-| `GET /frame.png` | 최신 설정 camera 프레임 및 revision, 프레임 준비 전 204 |
-| `GET /frame-top.png` | 같은 revision의 최신 상면 높이 지도, 프레임 준비 전 204 |
+| `GET /frame.png` | 최신 고정 사선 프레임 및 revision, 프레임 준비 전 204 |
 | `GET /status` | 연결, 실행, 수신 및 렌더링 sequence, 누락과 마지막 정상 수신 시각 |
 
-렌더링 worker는 설정한 camera 프레임과 상면 높이 지도를 순서대로 만든 뒤 하나의 revision으로
-교체한다. Browser는 두 프레임을 나란히 표시하고 이전 요청이 끝난 뒤 다음 요청을 보낸다.
+렌더링 worker는 고정 사선 프레임 하나를 만든 뒤 하나의 revision으로 교체한다. Browser는
+프레임 하나를 표시하고 이전 요청이 끝난 뒤 다음 요청을 보낸다.
 HTTP 요청은 보관된 최신 프레임과 상태를 읽으며 렌더링을 직접 시작하지 않는다. 상태에는
 최신 수신 sequence와 화면에 반영된 sequence를 구분하여 렌더링 지연을 표시한다.
-Browser는 상태를 0.5초마다 조회하고 revision이 바뀐 경우에만 두 PNG를 다시 요청한다.
+Browser는 상태를 0.5초마다 조회하고 revision이 바뀐 경우에만 PNG를 다시 요청한다.
 
 ## 배포 경계
 

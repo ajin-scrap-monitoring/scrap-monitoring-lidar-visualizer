@@ -40,7 +40,6 @@ INACTIVE_INLET_COLOR = "#2E7D32"
 class RenderConfig:
     width: int = DEFAULT_FRAME_WIDTH
     height: int = DEFAULT_FRAME_HEIGHT
-    camera: Literal["isometric", "top"] = "isometric"
 
     def validate(self) -> None:
         if self.width <= 0 or self.height <= 0:
@@ -108,6 +107,10 @@ def _height_tick_levels(floor_z_m: float, top_z_m: float) -> tuple[float, ...]:
 def _format_height(level: float) -> str:
     normalized = 0.0 if math.isclose(level, 0.0, abs_tol=1e-9) else level
     return f"{normalized:g} m"
+
+
+def _height_label_font_size(frame_height: int) -> int:
+    return max(16, min(28, round(frame_height / 40)))
 
 
 def _height_scale(
@@ -185,7 +188,7 @@ def _height_poly_data(mesh: Mesh) -> pv.PolyData:
 
 
 def _camera_position(
-    header: Header, camera: Literal["isometric", "top"]
+    header: Header,
 ) -> tuple[
     tuple[float, float, float], tuple[float, float, float], tuple[float, float, float]
 ]:
@@ -201,8 +204,6 @@ def _camera_position(
         1.0,
     )
     focal = (center_x, center_y, center_z)
-    if camera == "top":
-        return ((center_x, center_y, center_z + 3 * span), focal, (0.0, 1.0, 0.0))
     return (
         (center_x + 1.7 * span, center_y - 1.7 * span, center_z + 1.3 * span),
         focal,
@@ -243,7 +244,7 @@ def describe_scene(
         else None
     )
     return SceneDescription(
-        camera_position=_camera_position(header, config.camera),
+        camera_position=_camera_position(header),
         overlay=_overlay(
             observation,
             connected=connected,
@@ -298,24 +299,23 @@ def render_scene(
             show_edges=True,
             show_scalar_bar=False,
         )
-        if config.camera == "isometric":
-            height_scale = _height_scale(header, description.camera_position)
-            plotter.add_lines(
-                np.asarray(height_scale.line_points),
-                color=OVERLAY_COLOR,
-                width=2,
-            )
-            plotter.add_point_labels(
-                height_scale.label_points,
-                height_scale.labels,
-                bold=False,
-                font_size=10,
-                text_color=OVERLAY_COLOR,
-                show_points=False,
-                shape=None,
-                always_visible=True,
-                justification_horizontal="left",
-            )
+        height_scale = _height_scale(header, description.camera_position)
+        plotter.add_lines(
+            np.asarray(height_scale.line_points),
+            color=OVERLAY_COLOR,
+            width=2,
+        )
+        plotter.add_point_labels(
+            height_scale.label_points,
+            height_scale.labels,
+            bold=False,
+            font_size=_height_label_font_size(config.height),
+            text_color=OVERLAY_COLOR,
+            show_points=False,
+            shape=None,
+            always_visible=True,
+            justification_horizontal="left",
+        )
         x_values = tuple(point[0] for point in header.scene.boundary_xy_m)
         y_values = tuple(point[1] for point in header.scene.boundary_xy_m)
         marker_scale = max(

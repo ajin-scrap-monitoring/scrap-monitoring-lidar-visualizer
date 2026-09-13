@@ -17,7 +17,6 @@ def test_live_parser_reads_environment_configuration() -> None:
             "SCRAP_MONITORING_VISUALIZER_TCP_PORT": "17000",
             "SCRAP_MONITORING_VISUALIZER_HTTP_HOST": "0.0.0.0",
             "SCRAP_MONITORING_VISUALIZER_HTTP_PORT": "18000",
-            "SCRAP_MONITORING_VISUALIZER_CAMERA": "top",
             "SCRAP_MONITORING_VISUALIZER_WIDTH": "1920",
             "SCRAP_MONITORING_VISUALIZER_HEIGHT": "1080",
         }
@@ -29,7 +28,6 @@ def test_live_parser_reads_environment_configuration() -> None:
     assert args.tcp_port == 17000
     assert args.http_host == "0.0.0.0"
     assert args.http_port == 18000
-    assert args.camera == "top"
     assert args.width == 1920
     assert args.height == 1080
 
@@ -57,7 +55,6 @@ def test_cli_arguments_override_environment_configuration() -> None:
             "SCRAP_MONITORING_VISUALIZER_TCP_PORT": "invalid",
             "SCRAP_MONITORING_VISUALIZER_HTTP_HOST": "environment-http-host",
             "SCRAP_MONITORING_VISUALIZER_HTTP_PORT": "9000",
-            "SCRAP_MONITORING_VISUALIZER_CAMERA": "top",
         }
     )
 
@@ -72,8 +69,6 @@ def test_cli_arguments_override_environment_configuration() -> None:
             "cli-http-host",
             "--http-port",
             "18000",
-            "--camera",
-            "isometric",
         ]
     )
 
@@ -81,7 +76,6 @@ def test_cli_arguments_override_environment_configuration() -> None:
     assert args.tcp_port == 17000
     assert args.http_host == "cli-http-host"
     assert args.http_port == 18000
-    assert args.camera == "isometric"
 
 
 def test_parser_rejects_invalid_environment_number() -> None:

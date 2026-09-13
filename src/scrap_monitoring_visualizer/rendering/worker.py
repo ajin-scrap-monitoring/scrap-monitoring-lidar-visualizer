@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import multiprocessing as mp
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from queue import Empty, Full
 from typing import Any
 
@@ -27,7 +27,6 @@ class RenderOutcome:
     generation: int
     sequence: int
     png: bytes | None
-    top_png: bytes | None
     error: str | None
 
 
@@ -41,21 +40,10 @@ def _render(generation: int, request: RenderRequest) -> RenderOutcome:
             config=request.config,
             connected=request.connected,
         )
-        if request.config.camera == "top":
-            top_png = png
-        else:
-            top_png, _ = render_scene(
-                request.header,
-                request.observation,
-                geometry,
-                config=replace(request.config, camera="top"),
-                connected=request.connected,
-            )
         return RenderOutcome(
             generation=generation,
             sequence=request.observation.sequence,
             png=png,
-            top_png=top_png,
             error=None,
         )
     except Exception as error:
@@ -63,7 +51,6 @@ def _render(generation: int, request: RenderRequest) -> RenderOutcome:
             generation=generation,
             sequence=request.observation.sequence,
             png=None,
-            top_png=None,
             error=str(error),
         )
 
@@ -131,14 +118,10 @@ class LatestRenderWorker:
         self._flush_pending()
         if latest is None or latest.generation != self._generation:
             return None
-        if latest.error is not None or latest.png is None or latest.top_png is None:
+        if latest.error is not None or latest.png is None:
             self.last_error = latest.error or "renderer returned no frame"
             return latest
-        self._frames.publish(
-            latest.png,
-            latest.top_png,
-            sequence=latest.sequence,
-        )
+        self._frames.publish(latest.png, sequence=latest.sequence)
         self.last_error = None
         return latest
 

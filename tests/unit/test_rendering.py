@@ -15,6 +15,7 @@ from scrap_monitoring_visualizer.rendering import RenderConfig, describe_scene
 from scrap_monitoring_visualizer.rendering.renderer import (
     HEIGHT_SCALAR_NAME,
     _apply_camera,
+    _height_label_font_size,
     _height_poly_data,
     _height_scale,
     _height_tick_levels,
@@ -49,11 +50,6 @@ def records() -> tuple[Header, Observation]:
 def test_render_config_rejects_invalid_dimensions(config: RenderConfig) -> None:
     with pytest.raises(ValueError):
         config.validate()
-
-
-def test_render_config_accepts_both_cameras() -> None:
-    RenderConfig(camera="isometric").validate()
-    RenderConfig(camera="top").validate()
 
 
 def test_camera_uses_parallel_projection() -> None:
@@ -100,6 +96,16 @@ def test_height_ticks_use_two_meter_intervals_and_include_bounds() -> None:
     assert _height_tick_levels(-0.5, 3.5) == (-0.5, 0.0, 2.0, 3.5)
 
 
+@pytest.mark.parametrize(
+    ("frame_height", "font_size"),
+    [(360, 16), (720, 18), (1080, 27), (2160, 28)],
+)
+def test_height_label_font_size_scales_with_frame(
+    frame_height: int, font_size: int
+) -> None:
+    assert _height_label_font_size(frame_height) == font_size
+
+
 def test_height_scale_uses_screen_right_boundary_edge(
     records: tuple[Header, Observation],
 ) -> None:
@@ -107,7 +113,7 @@ def test_height_scale_uses_screen_right_boundary_edge(
     camera_position = describe_scene(
         header,
         observation,
-        config=RenderConfig(camera="isometric"),
+        config=RenderConfig(),
         connected=True,
     ).camera_position
     scale = _height_scale(header, camera_position)
@@ -118,30 +124,22 @@ def test_height_scale_uses_screen_right_boundary_edge(
     assert scale.labels == ("0 m", "1 m")
 
 
-def test_scene_description_contains_required_overlay_and_camera(
+def test_scene_description_contains_required_overlay(
     records: tuple[Header, Observation],
 ) -> None:
     header, observation = records
-    isometric = describe_scene(
+    description = describe_scene(
         header,
         observation,
-        config=RenderConfig(camera="isometric"),
+        config=RenderConfig(),
         connected=True,
     )
-    top = describe_scene(
-        header,
-        observation,
-        config=RenderConfig(camera="top"),
-        connected=False,
-    )
 
-    assert isometric.camera_position != top.camera_position
-    assert isometric.active_inlet_index == 0
-    assert "sequence: 1" in isometric.overlay
-    assert "connection: connected" in isometric.overlay
-    assert "run:" not in isometric.overlay
-    assert "missing_sequences:" not in top.overlay
-    assert "connection: disconnected" in top.overlay
+    assert description.active_inlet_index == 0
+    assert "sequence: 1" in description.overlay
+    assert "connection: connected" in description.overlay
+    assert "run:" not in description.overlay
+    assert "missing_sequences:" not in description.overlay
 
 
 def test_collecting_scene_has_no_active_inlet(

@@ -5,7 +5,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Any, Literal
+from typing import Any
 
 import uvicorn
 
@@ -33,7 +33,6 @@ class LiveConfig:
     tcp_port: int
     http_host: str
     http_port: int
-    camera: Literal["isometric", "top"] = "isometric"
     width: int = DEFAULT_FRAME_WIDTH
     height: int = DEFAULT_FRAME_HEIGHT
 
@@ -44,9 +43,7 @@ class LiveConfig:
             raise ValueError("listen ports must be between 1 and 65535")
         if self.tcp_host == self.http_host and self.tcp_port == self.http_port:
             raise ValueError("TCP and HTTP endpoints must be different")
-        RenderConfig(
-            width=self.width, height=self.height, camera=self.camera
-        ).validate()
+        RenderConfig(width=self.width, height=self.height).validate()
 
 
 class LiveCoordinator:
@@ -127,7 +124,7 @@ async def run_live(config: LiveConfig) -> int:
     coordinator = LiveCoordinator(
         frames,
         worker,
-        RenderConfig(width=config.width, height=config.height, camera=config.camera),
+        RenderConfig(width=config.width, height=config.height),
     )
     receiver = ObservationReceiver(ContractParser(), on_state=coordinator.state_changed)
     coordinator.bind_receiver(receiver)

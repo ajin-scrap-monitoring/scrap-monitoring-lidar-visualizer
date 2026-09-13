@@ -6,7 +6,7 @@ Generator가 계산한 현재 적재물 표면과 시나리오 상태의 전체 
 
 Visualizer는 모니터, `DISPLAY`와 GPU(Graphics Processing Unit)가 없는 Container에서
 프레임을 생성한다. 개발 장비의 Browser는 HTTP(Hypertext Transfer Protocol)를 통해 최신
-사선 프레임, 상면 높이 지도와 수신 상태를 확인한다. Visualizer는 관찰 이력이나 영상을
+3D 프레임과 수신 상태를 확인한다. Visualizer는 관찰 이력이나 영상을
 파일로 저장하지 않는다.
 
 ## 주요 기능
@@ -15,7 +15,7 @@ Visualizer는 모니터, `DISPLAY`와 GPU(Graphics Processing Unit)가 없는 Co
 - 적재 공간, 닫힌 적재 체적과 투입구의 결정론적인 3D mesh 렌더링
 - 1280 x 720 기본 프레임, smooth shading과 중립색 형상 격자
 - 적재물 높이에 따른 고정 색상과 외벽 우측 변의 2 m 높이 눈금
-- 최신 사선 프레임, 상면 높이 지도와 상태를 제공하는 Browser 기반 Live preview
+- 최신 3D 프레임과 상태를 제공하는 Browser 기반 Live preview
 - Linux AMD64 비root Container와 Public GHCR(GitHub Container Registry) 이미지
 
 ## 빠른 시작
@@ -67,7 +67,7 @@ Browser에서 `http://127.0.0.1:18000/`을 열면 Live 화면이 표시된다. �
 순서로 결정한다. Container 배포는 Repository 루트의 [`.env.example`](.env.example)을
 복사한 `.env`로 환경 변수를 주입한다. 프로그램은 시작할 때 환경 변수를 한 번 읽는다.
 
-환경 변수는 다음 7개다.
+환경 변수는 다음 6개다.
 
 | 환경 변수 | CLI option | 기본값 |
 | --- | --- | --- |
@@ -75,12 +75,11 @@ Browser에서 `http://127.0.0.1:18000/`을 열면 Live 화면이 표시된다. �
 | `SCRAP_MONITORING_VISUALIZER_TCP_PORT` | `--tcp-port` | `17000` |
 | `SCRAP_MONITORING_VISUALIZER_HTTP_HOST` | `--http-host` | `0.0.0.0` |
 | `SCRAP_MONITORING_VISUALIZER_HTTP_PORT` | `--http-port` | `18000` |
-| `SCRAP_MONITORING_VISUALIZER_CAMERA` | `--camera` | `isometric` |
 | `SCRAP_MONITORING_VISUALIZER_WIDTH` | `--width` | `1280` |
 | `SCRAP_MONITORING_VISUALIZER_HEIGHT` | `--height` | `720` |
 
-`CAMERA`는 `isometric` 또는 `top`이다. Browser는 설정한 camera 프레임과 상면 높이 지도를
-나란히 표시한다. 해상도 상한은 3840 x 2160이다. TCP와 HTTP endpoint는 서로 달라야 하며,
+Browser는 고정 사선 직교투영 3D 프레임 하나를 표시한다. 해상도 상한은 3840 x 2160이다.
+TCP와 HTTP endpoint는 서로 달라야 하며,
 유효하지 않은 설정은 종료 code 2로 보고한다.
 
 Visualizer에는 자격 증명 설정이 없다. HTTP endpoint에는 인증과 TLS(Transport Layer
@@ -109,9 +108,8 @@ DNS(Domain Name System) 이름 또는 IP 주소여야 한다. 실제 사설 주�
 
 | 경로 | 응답 |
 | --- | --- |
-| `GET /` | 사선 화면, 상면 높이 지도와 상태를 표시하는 웹페이지 |
-| `GET /frame.png` | 설정한 camera의 최신 PNG |
-| `GET /frame-top.png` | 같은 revision의 최신 상면 PNG |
+| `GET /` | 3D 화면과 상태를 표시하는 웹페이지 |
+| `GET /frame.png` | 최신 3D 프레임 PNG |
 | `GET /status` | 연결, 수신, 누락과 렌더링 상태 JSON |
 
 `/status`의 `received_sequence`와 `rendered_sequence`가 같은 값이면 최신 수신 관찰이 화면에
@@ -120,9 +118,8 @@ TCP port에서 다음 연결을 기다린다.
 
 프레임 왼쪽 위에는 `sequence`, `elapsed_s`, `surface_fill_ratio`, `phase`, `cycle_index`와
 `connection`을 표시한다. Sensor는 입력 계약으로 검증하지만 프레임에는 표시하지 않는다.
-적재물의 노랑-주황-적색은 높이에 따라 고정되고, 사선 프레임은 화면상 가장 오른쪽 외벽 변에
-2 m 간격 높이 눈금을 표시한다. 상면 높이 지도에는 겹침을 피하기 위해 수직 눈금을 표시하지
-않는다.
+적재물의 노랑-주황-적색은 높이에 따라 고정되고, 프레임은 화면상 가장 오른쪽 외벽 변에
+2 m 간격 높이 눈금을 표시한다. 눈금 숫자는 프레임 높이에 맞춰 16부터 28까지 조정된다.
 
 `GET /status`의 JSON 필드는 다음 11개다.
 
