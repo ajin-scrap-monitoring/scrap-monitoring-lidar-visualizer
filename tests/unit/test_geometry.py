@@ -5,12 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from scrap_monitoring_lidar_visualizer.contracts import (
+from scrap_monitoring_visualizer.contracts import (
     ContractParser,
     Header,
     Observation,
 )
-from scrap_monitoring_lidar_visualizer.geometry import build_scene_geometry
+from scrap_monitoring_visualizer.geometry import build_scene_geometry
 
 CONTRACT_ROOT = Path("contracts/observation/v1")
 

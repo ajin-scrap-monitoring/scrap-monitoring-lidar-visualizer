@@ -5,14 +5,14 @@ from typing import cast
 import pytest
 import pyvista as pv
 
-from scrap_monitoring_lidar_visualizer.contracts import (
+from scrap_monitoring_visualizer.contracts import (
     ContractParser,
     Header,
     Observation,
 )
-from scrap_monitoring_lidar_visualizer.geometry import build_scene_geometry
-from scrap_monitoring_lidar_visualizer.rendering import RenderConfig, describe_scene
-from scrap_monitoring_lidar_visualizer.rendering.renderer import (
+from scrap_monitoring_visualizer.geometry import build_scene_geometry
+from scrap_monitoring_visualizer.rendering import RenderConfig, describe_scene
+from scrap_monitoring_visualizer.rendering.renderer import (
     HEIGHT_SCALAR_NAME,
     _apply_camera,
     _height_poly_data,

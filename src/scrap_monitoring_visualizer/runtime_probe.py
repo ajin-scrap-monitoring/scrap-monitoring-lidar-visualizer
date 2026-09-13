@@ -15,7 +15,7 @@ import numpy as np
 import pyvista as pv
 import vtk
 
-from scrap_monitoring_lidar_visualizer.limits import (
+from scrap_monitoring_visualizer.limits import (
     DEFAULT_FRAME_HEIGHT,
     DEFAULT_FRAME_WIDTH,
     MAX_FRAME_HEIGHT,

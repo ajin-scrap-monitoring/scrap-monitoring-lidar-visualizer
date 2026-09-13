@@ -9,22 +9,22 @@ from typing import Any, Literal
 
 import uvicorn
 
-from scrap_monitoring_lidar_visualizer.contracts import ContractParser
-from scrap_monitoring_lidar_visualizer.limits import (
+from scrap_monitoring_visualizer.contracts import ContractParser
+from scrap_monitoring_visualizer.limits import (
     DEFAULT_FRAME_HEIGHT,
     DEFAULT_FRAME_WIDTH,
 )
-from scrap_monitoring_lidar_visualizer.preview import (
+from scrap_monitoring_visualizer.preview import (
     LatestFrameStore,
     create_preview_app,
 )
-from scrap_monitoring_lidar_visualizer.receiver import ObservationReceiver
-from scrap_monitoring_lidar_visualizer.rendering import RenderConfig
-from scrap_monitoring_lidar_visualizer.rendering.worker import (
+from scrap_monitoring_visualizer.receiver import ObservationReceiver
+from scrap_monitoring_visualizer.rendering import RenderConfig
+from scrap_monitoring_visualizer.rendering.worker import (
     LatestRenderWorker,
     RenderRequest,
 )
-from scrap_monitoring_lidar_visualizer.state import ExecutionState
+from scrap_monitoring_visualizer.state import ExecutionState
 
 
 @dataclass(frozen=True, slots=True)

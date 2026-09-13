@@ -7,13 +7,13 @@ from typing import Any
 
 import pytest
 
-from scrap_monitoring_lidar_visualizer.contracts import (
+from scrap_monitoring_visualizer.contracts import (
     ContractError,
     ContractParser,
     Header,
     Observation,
 )
-from scrap_monitoring_lidar_visualizer.state import (
+from scrap_monitoring_visualizer.state import (
     ExecutionState,
     StateError,
     accept_header,

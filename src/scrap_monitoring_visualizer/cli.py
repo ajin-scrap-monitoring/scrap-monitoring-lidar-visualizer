@@ -9,13 +9,13 @@ import sys
 from collections.abc import Mapping, Sequence
 from typing import Any
 
-from scrap_monitoring_lidar_visualizer.limits import (
+from scrap_monitoring_visualizer.limits import (
     DEFAULT_FRAME_HEIGHT,
     DEFAULT_FRAME_WIDTH,
 )
-from scrap_monitoring_lidar_visualizer.live import LiveConfig, run_live
+from scrap_monitoring_visualizer.live import LiveConfig, run_live
 
-ENV_PREFIX = "LIDAR_VISUALIZER_"
+ENV_PREFIX = "SCRAP_MONITORING_VISUALIZER_"
 
 
 def _environment_argument(
@@ -39,7 +39,7 @@ def build_parser(
     environment: Mapping[str, str] | None = None,
 ) -> argparse.ArgumentParser:
     values = os.environ if environment is None else environment
-    parser = argparse.ArgumentParser(prog="lidar-visualizer")
+    parser = argparse.ArgumentParser(prog="scrap-monitoring-visualizer")
     subparsers = parser.add_subparsers(dest="mode", required=True)
     live = subparsers.add_parser("live")
     live.add_argument(

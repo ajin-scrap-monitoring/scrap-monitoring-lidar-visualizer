@@ -942,8 +942,8 @@ wheels = [
 ]
 
 [[package]]
-name = "scrap-monitoring-lidar-visualizer"
-version = "1.0.0"
+name = "scrap-monitoring-visualizer"
+version = "1.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "fastapi" },

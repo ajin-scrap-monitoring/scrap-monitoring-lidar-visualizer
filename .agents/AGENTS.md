@@ -50,7 +50,7 @@ GitHub 작업 전에 관련 원문의 최신 내용을 확인한다. 이슈는 �
 
 ## 코드와 입력 경계
 
-프로그램 구현 경로는 `src/scrap_monitoring_lidar_visualizer/`이고 자동 검증 경로는
+프로그램 구현 경로는 `src/scrap_monitoring_visualizer/`이고 자동 검증 경로는
 `tests/`다. 코드와 테스트 디렉토리는 해당 구현 단계에서 생성한다.
 
 `contracts/observation/v1/`의 계약 사본은 원본 byte를 보존한다. 형식 정리나 로컬 요구사항을

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from jsonschema import Draft202012Validator
 
-SPEC_SHA256 = "e07b9ea9b2c8512fd30f8e8025c8fa9a85b9b3ed154a0a5c8120a440255216ed"
+SPEC_SHA256 = "41e57ca208ef771573375aca44e5759507993ef14c18885636b0e9746208d57e"
 AGENT_LINKS = {
     "AGENTS.md": ".agents/AGENTS.md",
     "GEMINI.md": ".agents/AGENTS.md",
@@ -65,7 +65,7 @@ def check_contracts(root: Path) -> None:
     for name, metadata in provenance["files"].items():
         digest = hashlib.sha256((base / name).read_bytes()).hexdigest()
         require(digest == metadata["sha256"], f"Contract checksum mismatch: {name}")
-    packaged = root / "src/scrap_monitoring_lidar_visualizer/contracts/schema/v1"
+    packaged = root / "src/scrap_monitoring_visualizer/contracts/schema/v1"
     for name in ("header.schema.json", "observation.schema.json"):
         require(
             (packaged / name).read_bytes() == (base / name).read_bytes(),

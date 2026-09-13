@@ -8,13 +8,13 @@ import os
 from dataclasses import asdict
 from pathlib import Path
 
-from scrap_monitoring_lidar_visualizer.contracts import (
+from scrap_monitoring_visualizer.contracts import (
     ContractParser,
     Header,
     Observation,
 )
-from scrap_monitoring_lidar_visualizer.geometry import build_scene_geometry
-from scrap_monitoring_lidar_visualizer.rendering import RenderConfig, render_scene
+from scrap_monitoring_visualizer.geometry import build_scene_geometry
+from scrap_monitoring_visualizer.rendering import RenderConfig, render_scene
 
 
 def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:

@@ -3,7 +3,7 @@
 from dataclasses import dataclass, replace
 from typing import Literal
 
-from scrap_monitoring_lidar_visualizer.contracts.models import Header, Observation
+from scrap_monitoring_visualizer.contracts.models import Header, Observation
 
 
 class StateError(ValueError):

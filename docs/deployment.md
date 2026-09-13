@@ -3,9 +3,9 @@
 ## 현재 산출물
 
 현재 package는 TCP 관찰 수신, 렌더링 자식 process와 HTTP preview를 연결하는 Live 전용
-`lidar-visualizer` CLI(Command-Line Interface)를 제공한다. Container 검증은 실제 loopback
+`scrap-monitoring-visualizer` CLI(Command-Line Interface)를 제공한다. Container 검증은 실제 loopback
 TCP 입력, 사선 및 상면 PNG, HTTP 응답과 수신 상태를 확인한다. Image entrypoint는
-`lidar-visualizer`이고 TCP 17000과 HTTP 18000 port를 선언한다.
+`scrap-monitoring-visualizer`이고 TCP 17000과 HTTP 18000 port를 선언한다.
 
 Container는 Linux AMD64에서 UID(User Identifier)와 GID(Group Identifier) 10001인 비root
 사용자로 실행한다. 운영 실행은 root filesystem을 read-only로 두고 `/tmp`만 tmpfs로
@@ -24,7 +24,7 @@ Container는 Linux AMD64에서 UID(User Identifier)와 GID(Group Identifier) 100
 ```bash
 docker build \
   --platform linux/amd64 \
-  --tag scrap-monitoring-lidar-visualizer:test \
+  --tag scrap-monitoring-visualizer:test \
   .
 ```
 
@@ -50,7 +50,7 @@ digest를 전체 Container 검사에 사용한다. Package 공개 범위를 확�
 archive, image digest, release metadata, 의존성 inventory, 고지와 SHA-256 checksum을 draft
 Release에 올리고 최종 게시한다.
 
-[v0.5.0 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/releases/tag/v0.5.0)는
+[v0.5.0 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-visualizer/releases/tag/v0.5.0)는
 source commit `920723d38fd2ffc038b73e702ff2f7580b8daceb`에서 생성된 현재 최신 불변
 Release다. Release asset 7개의 SHA-256 checksum, wheel version, SLSA(Supply-chain Levels
 for Software Artifacts) provenance와 SPDX(Software Package Data Exchange) 2.3 SBOM을
@@ -76,7 +76,7 @@ ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:d21551b5a
 | 최대 clipping edge 검사 | 16,777,216 |
 
 경계 polygon은 최대 vertex 1,024개를 허용한다. 수치 상한의 정본은
-[`limits.py`](../src/scrap_monitoring_lidar_visualizer/limits.py)다.
+[`limits.py`](../src/scrap_monitoring_visualizer/limits.py)다.
 
 2026-09-13 Linux AMD64 host에서 Docker Engine 29.5.2로 측정한 결과는 다음과 같다.
 

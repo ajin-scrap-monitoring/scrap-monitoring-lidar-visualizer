@@ -18,7 +18,7 @@ _INDEX_HTML = """<!doctype html>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Scrap Monitoring LiDAR Visualizer</title>
+  <title>Scrap Monitoring Visualizer</title>
   <style>
     body{margin:0;background:#f4f6f8;color:#202124;font:14px sans-serif}
     main{max-width:1400px;margin:auto;padding:24px}
@@ -30,7 +30,7 @@ _INDEX_HTML = """<!doctype html>
   </style>
 </head>
 <body><main>
-  <h1>Scrap Monitoring LiDAR Visualizer</h1>
+  <h1>Scrap Monitoring Visualizer</h1>
   <div class="views">
     <figure><figcaption>Configured view</figcaption>
       <img id="frame" alt="Latest rendered observation">

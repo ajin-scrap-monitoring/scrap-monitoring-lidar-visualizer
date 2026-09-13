@@ -1,6 +1,6 @@
 """Bounded LF record assembly independent of TCP packet boundaries."""
 
-from scrap_monitoring_lidar_visualizer.contracts.parser import MAX_RECORD_BYTES
+from scrap_monitoring_visualizer.contracts.parser import MAX_RECORD_BYTES
 
 
 class LineFramingError(ValueError):

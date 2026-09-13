@@ -7,12 +7,12 @@ from typing import Any
 
 import uvicorn
 
-from scrap_monitoring_lidar_visualizer.preview import (
+from scrap_monitoring_visualizer.preview import (
     LatestFrameStore,
     RequestGate,
     create_preview_app,
 )
-from scrap_monitoring_lidar_visualizer.rendering.worker import (
+from scrap_monitoring_visualizer.rendering.worker import (
     LatestRenderWorker,
     RenderOutcome,
 )

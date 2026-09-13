@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from scrap_monitoring_lidar_visualizer.contracts.models import Header, Observation
-from scrap_monitoring_lidar_visualizer.limits import (
+from scrap_monitoring_visualizer.contracts.models import Header, Observation
+from scrap_monitoring_visualizer.limits import (
     MAX_CLIP_EDGE_TESTS,
     MAX_SURFACE_TRIANGLES,
 )

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from importlib.metadata import distribution
 
-from scrap_monitoring_lidar_visualizer.dependency_audit import (
+from scrap_monitoring_visualizer.dependency_audit import (
     _declared_license,
     _notice_paths,
 )

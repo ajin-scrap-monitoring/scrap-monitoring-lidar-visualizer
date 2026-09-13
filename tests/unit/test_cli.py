@@ -1,6 +1,6 @@
 import pytest
 
-from scrap_monitoring_lidar_visualizer.cli import build_parser, main
+from scrap_monitoring_visualizer.cli import build_parser, main
 
 
 def test_live_parser_requires_both_endpoints() -> None:
@@ -13,13 +13,13 @@ def test_live_parser_requires_both_endpoints() -> None:
 def test_live_parser_reads_environment_configuration() -> None:
     parser = build_parser(
         {
-            "LIDAR_VISUALIZER_TCP_HOST": "0.0.0.0",
-            "LIDAR_VISUALIZER_TCP_PORT": "17000",
-            "LIDAR_VISUALIZER_HTTP_HOST": "0.0.0.0",
-            "LIDAR_VISUALIZER_HTTP_PORT": "18000",
-            "LIDAR_VISUALIZER_CAMERA": "top",
-            "LIDAR_VISUALIZER_WIDTH": "1920",
-            "LIDAR_VISUALIZER_HEIGHT": "1080",
+            "SCRAP_MONITORING_VISUALIZER_TCP_HOST": "0.0.0.0",
+            "SCRAP_MONITORING_VISUALIZER_TCP_PORT": "17000",
+            "SCRAP_MONITORING_VISUALIZER_HTTP_HOST": "0.0.0.0",
+            "SCRAP_MONITORING_VISUALIZER_HTTP_PORT": "18000",
+            "SCRAP_MONITORING_VISUALIZER_CAMERA": "top",
+            "SCRAP_MONITORING_VISUALIZER_WIDTH": "1920",
+            "SCRAP_MONITORING_VISUALIZER_HEIGHT": "1080",
         }
     )
 
@@ -37,10 +37,10 @@ def test_live_parser_reads_environment_configuration() -> None:
 def test_live_parser_uses_rendering_defaults() -> None:
     parser = build_parser(
         {
-            "LIDAR_VISUALIZER_TCP_HOST": "0.0.0.0",
-            "LIDAR_VISUALIZER_TCP_PORT": "17000",
-            "LIDAR_VISUALIZER_HTTP_HOST": "0.0.0.0",
-            "LIDAR_VISUALIZER_HTTP_PORT": "18000",
+            "SCRAP_MONITORING_VISUALIZER_TCP_HOST": "0.0.0.0",
+            "SCRAP_MONITORING_VISUALIZER_TCP_PORT": "17000",
+            "SCRAP_MONITORING_VISUALIZER_HTTP_HOST": "0.0.0.0",
+            "SCRAP_MONITORING_VISUALIZER_HTTP_PORT": "18000",
         }
     )
 
@@ -53,11 +53,11 @@ def test_live_parser_uses_rendering_defaults() -> None:
 def test_cli_arguments_override_environment_configuration() -> None:
     parser = build_parser(
         {
-            "LIDAR_VISUALIZER_TCP_HOST": "environment-host",
-            "LIDAR_VISUALIZER_TCP_PORT": "invalid",
-            "LIDAR_VISUALIZER_HTTP_HOST": "environment-http-host",
-            "LIDAR_VISUALIZER_HTTP_PORT": "9000",
-            "LIDAR_VISUALIZER_CAMERA": "top",
+            "SCRAP_MONITORING_VISUALIZER_TCP_HOST": "environment-host",
+            "SCRAP_MONITORING_VISUALIZER_TCP_PORT": "invalid",
+            "SCRAP_MONITORING_VISUALIZER_HTTP_HOST": "environment-http-host",
+            "SCRAP_MONITORING_VISUALIZER_HTTP_PORT": "9000",
+            "SCRAP_MONITORING_VISUALIZER_CAMERA": "top",
         }
     )
 
@@ -87,10 +87,10 @@ def test_cli_arguments_override_environment_configuration() -> None:
 def test_parser_rejects_invalid_environment_number() -> None:
     parser = build_parser(
         {
-            "LIDAR_VISUALIZER_TCP_HOST": "0.0.0.0",
-            "LIDAR_VISUALIZER_TCP_PORT": "invalid",
-            "LIDAR_VISUALIZER_HTTP_HOST": "0.0.0.0",
-            "LIDAR_VISUALIZER_HTTP_PORT": "18000",
+            "SCRAP_MONITORING_VISUALIZER_TCP_HOST": "0.0.0.0",
+            "SCRAP_MONITORING_VISUALIZER_TCP_PORT": "invalid",
+            "SCRAP_MONITORING_VISUALIZER_HTTP_HOST": "0.0.0.0",
+            "SCRAP_MONITORING_VISUALIZER_HTTP_PORT": "18000",
         }
     )
 

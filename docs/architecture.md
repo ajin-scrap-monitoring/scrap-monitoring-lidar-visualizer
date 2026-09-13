@@ -12,7 +12,7 @@
 
 ## 모듈 경계
 
-프로그램은 `src/scrap_monitoring_lidar_visualizer/` 아래의 다음 8개 경계로 구성한다.
+프로그램은 `src/scrap_monitoring_visualizer/` 아래의 다음 8개 경계로 구성한다.
 
 | 경계 | 책임 |
 | --- | --- |
@@ -35,7 +35,7 @@ Parser는 package 내부의 Observation version 1 schema를 기본 입력으로 
 
 ## 실행 설정
 
-실행 설정은 CLI 인자, `LIDAR_VISUALIZER_` 접두사의 환경 변수, 코드 기본값 순서로 결정한다.
+실행 설정은 CLI 인자, `SCRAP_MONITORING_VISUALIZER_` 접두사의 환경 변수, 코드 기본값 순서로 결정한다.
 실행 mode는 `live` 하나다. CLI 인자는 로컬 실행의 명시적 변경에 사용하고 환경 변수는
 Container 배포 환경의 설정 주입에 사용한다.
 

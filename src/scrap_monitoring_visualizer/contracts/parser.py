@@ -11,7 +11,7 @@ from typing import Any, Never, cast
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError
 
-from scrap_monitoring_lidar_visualizer.limits import (
+from scrap_monitoring_visualizer.limits import (
     MAX_BOUNDARY_VERTICES,
     MAX_GRID_POINTS,
 )

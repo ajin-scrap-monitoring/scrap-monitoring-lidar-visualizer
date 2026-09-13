@@ -6,12 +6,12 @@ from pathlib import Path
 
 import uvicorn
 
-from scrap_monitoring_lidar_visualizer.contracts import ContractParser
-from scrap_monitoring_lidar_visualizer.preview import (
+from scrap_monitoring_visualizer.contracts import ContractParser
+from scrap_monitoring_visualizer.preview import (
     LatestFrameStore,
     create_preview_app,
 )
-from scrap_monitoring_lidar_visualizer.receiver import ObservationReceiver
+from scrap_monitoring_visualizer.receiver import ObservationReceiver
 
 CONTRACT_ROOT = Path("contracts/observation/v1")
 

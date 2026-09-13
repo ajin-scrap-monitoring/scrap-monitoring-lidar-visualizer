@@ -238,7 +238,7 @@ jobs:
             --security-opt no-new-privileges \
             --entrypoint python \
             "$IMAGE_NAME@$IMAGE_DIGEST" \
-            -m scrap_monitoring_lidar_visualizer.dependency_audit \
+            -m scrap_monitoring_visualizer.dependency_audit \
             > release/dependency-inventory.json
           printf '%s@%s\n' "$IMAGE_NAME" "$IMAGE_DIGEST" \
             > release/oci-image.txt
@@ -258,12 +258,12 @@ jobs:
               dependency-inventory.json \
               oci-image.txt \
               release-metadata.json \
-              scrap_monitoring_lidar_visualizer-*.tar.gz \
-              scrap_monitoring_lidar_visualizer-*.whl \
+              scrap_monitoring_visualizer-*.tar.gz \
+              scrap_monitoring_visualizer-*.whl \
               > SHA256SUMS
           )
           cat > "$RUNNER_TEMP/release-notes.md" <<EOF
-          Scrap Monitoring LiDAR Visualizer $VERSION
+          Scrap Monitoring Visualizer $VERSION
 
           Container image: $IMAGE_NAME
           Manifest digest: $IMAGE_DIGEST
