@@ -8,8 +8,10 @@
 
 ## 현재 상태
 
-P0부터 P7까지 구현과 검증이 완료됐다. 현재 GitHub Release, Python package와 Public GHCR
-image의 불변 참조 및 검증 상태는 [실행 환경](deployment.md)에서 관리한다.
+P0부터 P7까지 구현과 검증이 완료됐다. P8의 환경 변수 설정 계층, 사용자 문서와 로컬
+Container 검증이 완료됐으며 게시 이미지 검증을 진행한다. 현재 GitHub Release, Python
+package와 Public GHCR image의 불변 참조 및 검증 상태는 [실행 환경](deployment.md)에서
+관리한다.
 
 고정 계약의 원본과 해시는 [provenance.json](../contracts/observation/v1/provenance.json)에
 있다. 해당 사본은 로컬 생성기 저장소의 지정 commit에서 가져온 공개 합성 계약이다.
@@ -17,7 +19,7 @@ Schema가 표현하지 않는 조건과 명세의 추가 수신 및 preview 요�
 
 ## 단계와 선행 관계
 
-개발 단계는 P0부터 P7까지 총 8개다. 각 단계의 작업은 시작 시 조직 양식의 이슈로 정의하며
+개발 단계는 P0부터 P8까지 총 9개다. 각 단계의 작업은 시작 시 조직 양식의 이슈로 정의하며
 단계가 여러 PR(Pull Request)을 필요로 하면 독립적으로 검증 가능한 산출물 단위로 나눈다.
 선행 단계의 검증과 병합 완료를 후속 단계의 시작 조건으로 사용한다.
 
@@ -31,9 +33,10 @@ Schema가 표현하지 않는 조건과 명세의 추가 수신 및 preview 요�
 | P5 | Live CLI(Command-Line Interface)와 HTTP(Hypertext Transfer Protocol) preview 통합 | P3, P4 | 완료 |
 | P6 | 기록 재생과 MP4 출력 | P3, P4, P5 | 완료 |
 | P7 | 컨테이너 및 릴리스 검증 | P5, P6 | 완료 |
+| P8 | Container 환경 변수와 사용자 배포 절차 | P7 | 진행 중 |
 
-현재 단계의 구현 작업은 모두 완료됐다. P1에서 고정한 Python, OSMesa와 FFmpeg 조합 및
-자원 기준은 [실행 환경](deployment.md)을 따른다.
+P8은 게시된 v0.2.0 image 검증과 Release 상태 동기화를 남겨 두고 있다. P1에서 고정한
+Python, OSMesa와 FFmpeg 조합 및 자원 기준은 [실행 환경](deployment.md)을 따른다.
 
 ## P0. 프로젝트 기준 구성
 
@@ -132,7 +135,7 @@ pixel 값을 동일성 기준으로 사용하지 않는다.
 | 구분 | 내용 |
 | --- | --- |
 | 산출물 | 최종 Dockerfile 및 `.dockerignore`, 배포 문서, 릴리스 workflow와 의존성 고지 |
-| 실행 검증 | Linux AMD64, 비root 실행, 명시적 writable 경로, TCP 및 HTTP port별 노출 |
+| 실행 검증 | Linux AMD64, 비root 실행, 환경 변수와 CLI 우선순위, 명시적 writable 경로, TCP 및 HTTP port별 노출 |
 | 품질 검증 | 단위, 계약, 통합 및 컨테이너 검사의 CI 집계와 CodeQL 결과 |
 | 공개 검증 | 전체 Git 이력 및 image의 운영 데이터 제외와 직접 및 전이 의존성 라이선스 확인 |
 | 배포 검증 | Release 기준 이미지 tag, digest와 GHCR(GitHub Container Registry) Package 공개 범위 |
@@ -144,6 +147,16 @@ Release와 Package 게시 시점은 조직 운영 절차를 따른다. 실제 �
 Release workflow는 tag 형식, package version과 원격 `main` 이력을 검사한다. 검사를 통과한
 동일 commit으로 image와 Python package를 만들고 게시한 image digest를 다시 검증한 뒤
 Release asset을 게시한다.
+
+## P8. Container 환경 변수와 사용자 배포 절차
+
+| 구분 | 내용 |
+| --- | --- |
+| 산출물 | Live와 Replay 환경 변수, CLI 우선순위, 자기완결적 README와 v0.2.0 Release |
+| 설정 검증 | 필수값, 숫자 변환, CLI override와 기존 설정 조합 검증 공유 |
+| Container 검증 | 환경 변수 기반 Live 설정 판정과 Replay MP4 생성 |
+| 문서 검증 | 불변 image 선택, 환경 변수 주입, Generator 연결, 상태 확인, 기록과 Replay 절차 |
+| 완료 조건 | 게시된 digest image의 전체 Container 검사와 README 빠른 시작 통과 |
 
 ## 요구사항 검증 대응
 

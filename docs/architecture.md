@@ -11,7 +11,7 @@
 
 | 경계 | 책임 |
 | --- | --- |
-| `cli.py` | CLI(Command-Line Interface) 인자, 설정 검증과 실행 수명 관리 |
+| `cli.py` | 환경 변수와 CLI(Command-Line Interface) 인자, 설정 검증과 실행 수명 관리 |
 | `contracts/` | 원본 레코드 해석, schema 및 의미 검증, 내부 불변 자료형 |
 | `receiver/` | TCP(Transmission Control Protocol) 연결 소유권과 LF(Line Feed) 레코드 조립 |
 | `state/` | 실행 식별, sequence 판정, 연결 상태와 최신 관찰 상태 |
@@ -33,6 +33,16 @@
 Parser는 package 내부의 Observation version 1 schema를 기본 입력으로 사용한다. 저장소
 검사는 package schema가 `contracts/observation/v1/`의 고정 사본과 byte 단위로 같은지
 확인하고 wheel 검사는 두 schema가 배포 산출물에 포함되는지 확인한다.
+
+## 실행 설정
+
+실행 설정은 CLI 인자, `LIDAR_VISUALIZER_` 접두사의 환경 변수, 코드 기본값 순서로
+결정한다. 실행 mode와 Replay 입력 경로는 위치 인자로 유지한다. CLI 인자는 로컬 실행의
+명시적 변경에 사용하고 환경 변수는 Container 배포 환경의 설정 주입에 사용한다.
+
+환경 변수와 CLI가 제공한 값은 같은 `LiveConfig`와 `ReplayConfig` 검증을 거친다. 숫자 형식,
+필수 endpoint, 상호 배타 출력과 기록 설정 묶음은 설정 출처와 관계없이 같은 오류 조건을
+적용한다. 프로그램은 환경 변수를 시작할 때 한 번 읽으며 실행 중 변경을 반영하지 않는다.
 
 ## 기술 선택
 

@@ -13,16 +13,17 @@ Antigravity는 `.agents/rules/project.md`의 Always On 규칙에서 이 파일�
 
 ## 문서 정본
 
-프로젝트 입력, 설계와 검증의 정본은 다음 6개다.
+프로젝트 입력, 사용법, 설계와 검증의 정본은 다음 7개다.
 
 | 문서 | 책임 |
 | --- | --- |
+| [README](../README.md) | 제품 개요, 환경 변수와 사용자 실행 및 배포 절차 |
 | [프로젝트 명세](../docs/project-spec.md) | 제품 범위, 외부 계약과 최종 완료 조건 |
 | [아키텍처](../docs/architecture.md) | 채택한 설계, 모듈 경계와 내부 처리 정책 |
 | [개발 계획](../docs/development-plan.md) | 현재 구현 상태, 작업 순서와 단계별 검증 |
 | [계약 출처](../contracts/observation/v1/provenance.json) | 고정 계약 사본의 원본, commit과 파일 해시 |
 | [검증 환경](../docs/dependencies.md) | 현재 검증 도구의 의존성과 실행 방법 |
-| [실행 환경](../docs/deployment.md) | Container 실행 경계와 자원 기준 |
+| [실행 환경](../docs/deployment.md) | Container 제약, 릴리스 검증과 자원 기준 |
 
 작업을 시작할 때 명세와 개발 계획을 읽고 해당 작업의 아키텍처 경계를 확인한다.
 `docs/project-spec.md`는 고정 입력이므로 구현 과정에서 수정하지 않는다. 설계와 구현 상태가
