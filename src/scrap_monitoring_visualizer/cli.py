@@ -61,11 +61,6 @@ def build_parser(
         **_environment_argument(values, "HTTP_PORT", required=True),
     )
     live.add_argument(
-        "--camera",
-        choices=("isometric", "top"),
-        **_environment_argument(values, "CAMERA", "isometric"),
-    )
-    live.add_argument(
         "--width",
         type=int,
         **_environment_argument(values, "WIDTH", DEFAULT_FRAME_WIDTH),
@@ -91,7 +86,6 @@ def main(
             tcp_port=args.tcp_port,
             http_host=args.http_host,
             http_port=args.http_port,
-            camera=args.camera,
             width=args.width,
             height=args.height,
         )

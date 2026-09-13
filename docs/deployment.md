@@ -4,7 +4,7 @@
 
 현재 package는 TCP 관찰 수신, 렌더링 자식 process와 HTTP preview를 연결하는 Live 전용
 `scrap-monitoring-visualizer` CLI(Command-Line Interface)를 제공한다. Container 검증은 실제 loopback
-TCP 입력, 사선 및 상면 PNG, HTTP 응답과 수신 상태를 확인한다. Image entrypoint는
+TCP 입력, 사선 PNG, HTTP 응답과 수신 상태를 확인한다. Image entrypoint는
 `scrap-monitoring-visualizer`이고 TCP 17000과 HTTP 18000 port를 선언한다.
 
 Container는 Linux AMD64에서 UID(User Identifier)와 GID(Group Identifier) 10001인 비root
@@ -36,7 +36,7 @@ scripts/check-headless-container.sh
 
 검사는 외부 network, Linux capability와 GPU device를 제공하지 않고 process 128개, CPU 2개,
 memory 1 GiB로 Container를 제한한다. 출력 JSON의 실행 사용자, renderer, 프레임 해상도,
-사선 및 상면 장면, TCP 무응답 계약, HTTP 최신 frame revision과 의존성 고지 경로를 검사한다.
+사선 장면, TCP 무응답 계약, HTTP 최신 frame revision과 의존성 고지 경로를 검사한다.
 
 ## 릴리스
 
@@ -50,18 +50,9 @@ digest를 전체 Container 검사에 사용한다. Package 공개 범위를 확�
 archive, image digest, release metadata, 의존성 inventory, 고지와 SHA-256 checksum을 draft
 Release에 올리고 최종 게시한다.
 
-[v1.0.0 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-visualizer/releases/tag/v1.0.0)는
-source commit `7f87118e4740c36ab8fbbf7f252a4349811da295`에서 생성된 현재 최신 불변
-Release다. Release asset 7개의 SHA-256 checksum, wheel version, SLSA(Supply-chain Levels
-for Software Artifacts) provenance와 SPDX(Software Package Data Exchange) 2.3 SBOM을
-검증했다. Package는 Public이며 인증 정보가 없는 Docker 설정으로 digest image를 가져올 수
-있다.
-
-현재 배포 image의 불변 참조는 다음과 같다.
-
-```text
-ghcr.io/ajin-scrap-monitoring/scrap-monitoring-visualizer@sha256:79ff197f3e6faf47ad7cfff853b3beaaeb3ffac7d16ea9cce500bc2b91855d7c
-```
+Release asset의 `oci-image.txt`가 현재 배포 image의 불변 참조를 제공한다. Package는
+Public이며 인증 정보가 없는 Docker 설정으로 digest image를 가져올 수 있다. 사용자는
+README의 빠른 시작 절차로 최신 Release의 참조를 가져온다.
 
 ## 자원 기준
 

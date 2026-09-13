@@ -44,15 +44,7 @@ def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:
         config=RenderConfig(),
         connected=True,
     )
-    top_png, _ = render_scene(
-        records[0],
-        records[1],
-        geometry,
-        config=RenderConfig(camera="top"),
-        connected=False,
-    )
     (output_dir / "scene.png").write_bytes(png)
-    (output_dir / "scene-top.png").write_bytes(top_png)
     payload = {
         **asdict(result),
         "path": "scene.png",
@@ -60,7 +52,6 @@ def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:
         "display_present": "DISPLAY" in os.environ,
         "floor_faces": len(geometry.floor.faces),
         "wall_faces": len(geometry.walls.faces),
-        "top_path": "scene-top.png",
     }
     (output_dir / "scene.json").write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"

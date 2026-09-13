@@ -86,9 +86,6 @@ async def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:
         frame_status, frame_headers, frame_body = await _http_get(
             http_port, "/frame.png"
         )
-        top_frame_status, top_frame_headers, top_frame_body = await _http_get(
-            http_port, "/frame-top.png"
-        )
         status_code, _, status_body = await _http_get(http_port, "/status")
         root_status, _, root_body = await _http_get(http_port, "/")
         status_payload = json.loads(status_body)
@@ -98,23 +95,16 @@ async def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:
             )
         if not frame_body.startswith(b"\x89PNG\r\n\x1a\n"):
             raise RuntimeError("preview frame is not PNG")
-        if not top_frame_body.startswith(b"\x89PNG\r\n\x1a\n"):
-            raise RuntimeError("top preview frame is not PNG")
         (output_dir / "live.png").write_bytes(frame_body)
-        (output_dir / "live-top.png").write_bytes(top_frame_body)
         result: dict[str, object] = {
             "frame_before_observation": before_status,
             "tcp_response_bytes": len(response),
             "frame_status": frame_status,
             "frame_revision": int(frame_headers["x-frame-revision"]),
             "frame_sequence": int(frame_headers["x-sequence"]),
-            "top_frame_status": top_frame_status,
-            "top_frame_revision": int(top_frame_headers["x-frame-revision"]),
-            "top_frame_sequence": int(top_frame_headers["x-sequence"]),
             "status_code": status_code,
             "root_status": root_status,
             "root_has_preview": b"/frame.png?revision=" in root_body,
-            "root_has_top_preview": b"/frame-top.png?revision=" in root_body,
             "connected": status_payload["connected"],
             "received_sequence": status_payload["received_sequence"],
             "rendered_sequence": status_payload["rendered_sequence"],
