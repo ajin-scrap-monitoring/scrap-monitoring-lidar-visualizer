@@ -10,9 +10,12 @@ from scrap_monitoring_lidar_visualizer.contracts import (
     Header,
     Observation,
 )
+from scrap_monitoring_lidar_visualizer.geometry import build_scene_geometry
 from scrap_monitoring_lidar_visualizer.rendering import RenderConfig, describe_scene
 from scrap_monitoring_lidar_visualizer.rendering.renderer import (
+    HEIGHT_SCALAR_NAME,
     _apply_camera,
+    _height_poly_data,
     _sensor_rotation_axis,
 )
 
@@ -85,6 +88,18 @@ def test_sensor_marker_uses_right_handed_rotation_axis(
     header, _ = records
 
     assert _sensor_rotation_axis(header.scene.sensors[0]) == (0.0, -1.0, 0.0)
+
+
+def test_height_mesh_uses_absolute_vertex_z_values(
+    records: tuple[Header, Observation],
+) -> None:
+    geometry = build_scene_geometry(*records)
+
+    data = _height_poly_data(geometry.surface)
+
+    assert data.point_data[HEIGHT_SCALAR_NAME].tolist() == [
+        vertex[2] for vertex in geometry.surface.vertices
+    ]
 
 
 def test_scene_description_contains_required_overlay_and_camera(

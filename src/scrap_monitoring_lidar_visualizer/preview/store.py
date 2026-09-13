@@ -7,6 +7,7 @@ from threading import Lock
 @dataclass(frozen=True, slots=True)
 class FrameSnapshot:
     png: bytes
+    top_png: bytes
     revision: int
     run_id: str
     sequence: int
@@ -18,11 +19,14 @@ class LatestFrameStore:
         self._revision = 0
         self._frame: FrameSnapshot | None = None
 
-    def publish(self, png: bytes, *, run_id: str, sequence: int) -> FrameSnapshot:
+    def publish(
+        self, png: bytes, top_png: bytes, *, run_id: str, sequence: int
+    ) -> FrameSnapshot:
         with self._lock:
             self._revision += 1
             self._frame = FrameSnapshot(
                 png=bytes(png),
+                top_png=bytes(top_png),
                 revision=self._revision,
                 run_id=run_id,
                 sequence=sequence,

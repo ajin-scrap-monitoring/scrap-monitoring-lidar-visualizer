@@ -66,15 +66,21 @@ async def _preview_probe(input_path: Path, output_dir: Path) -> dict[str, object
         await controller.play()
         root_status, root_body = await _http_get(port, "/")
         frame_status, frame_body = await _http_get(port, "/frame.png")
+        top_frame_status, top_frame_body = await _http_get(port, "/frame-top.png")
         status_code, status_body = await _http_get(port, "/status")
         status = json.loads(status_body)
         if not frame_body.startswith(b"\x89PNG\r\n\x1a\n"):
             raise RuntimeError("replay preview frame is not PNG")
+        if not top_frame_body.startswith(b"\x89PNG\r\n\x1a\n"):
+            raise RuntimeError("replay top preview frame is not PNG")
         (output_dir / "replay-preview.png").write_bytes(frame_body)
+        (output_dir / "replay-preview-top.png").write_bytes(top_frame_body)
         return {
             "root_status": root_status,
             "root_has_preview": b"/frame.png?revision=" in root_body,
+            "root_has_top_preview": b"/frame-top.png?revision=" in root_body,
             "frame_status": frame_status,
+            "top_frame_status": top_frame_status,
             "status_code": status_code,
             "playback_complete": status["playback_complete"],
             "playback_frame_count": status["playback_frame_count"],

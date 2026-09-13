@@ -150,3 +150,50 @@ def test_nonzero_floor_is_used_for_floor_and_walls(
 
     assert {vertex[2] for vertex in geometry.floor.vertices} == {-2.0}
     assert {vertex[2] for vertex in geometry.walls.vertices} == {-2.0, 2.0}
+
+
+def test_surface_volume_sides_extend_to_floor(
+    records: tuple[Header, Observation],
+) -> None:
+    header, observation = records
+    surface = replace(
+        observation.surface,
+        heights_m=((1.0, 1.0), (1.0, 1.0)),
+    )
+
+    geometry = build_scene_geometry(header, replace(observation, surface=surface))
+
+    assert len(geometry.volume_sides.faces) == 8
+    assert {vertex[2] for vertex in geometry.volume_sides.vertices} == {0.0, 1.0}
+    assert {(vertex[0], vertex[1]) for vertex in geometry.volume_sides.vertices} == set(
+        header.scene.boundary_xy_m
+    )
+
+
+def test_empty_surface_has_no_volume_sides(
+    records: tuple[Header, Observation],
+) -> None:
+    header, observation = records
+    surface = replace(
+        observation.surface,
+        heights_m=((0.0, 0.0), (0.0, 0.0)),
+    )
+
+    geometry = build_scene_geometry(header, replace(observation, surface=surface))
+
+    assert geometry.volume_sides.vertices == ()
+    assert geometry.volume_sides.faces == ()
+
+
+def test_each_observation_rebuilds_the_complete_surface(
+    records: tuple[Header, Observation],
+) -> None:
+    header, observation = records
+    replacement = replace(
+        observation.surface,
+        heights_m=((0.5, 0.5), (0.5, 0.5)),
+    )
+
+    geometry = build_scene_geometry(header, replace(observation, surface=replacement))
+
+    assert {vertex[2] for vertex in geometry.surface.vertices} == {0.5}

@@ -6,13 +6,14 @@ Generator가 계산한 현재 적재물 표면과 시나리오 상태의 snapsho
 
 Visualizer는 모니터, `DISPLAY`와 GPU(Graphics Processing Unit)가 없는 Container에서
 프레임을 생성한다. 개발 장비의 Browser는 HTTP(Hypertext Transfer Protocol)를 통해 최신
-PNG 프레임과 수신 상태를 표시한다.
+PNG 사선 프레임, 상면 높이 지도와 수신 상태를 표시한다.
 
 ## 주요 기능
 
 - TCP(Transmission Control Protocol) 기반 Observation version 1 수신과 계약 검증
-- 적재 공간, 표면, sensor와 투입구의 결정론적인 3D mesh 렌더링
-- 최신 PNG 프레임과 상태를 제공하는 Browser 기반 실시간 미리보기
+- 적재 공간, 닫힌 적재 체적, sensor와 투입구의 결정론적인 3D mesh 렌더링
+- 고정 높이 색상 범례와 중립색 표면 격자
+- 최신 사선 프레임, 상면 높이 지도와 상태를 제공하는 Browser 기반 실시간 미리보기
 - 상한이 있는 JSON Lines 관찰 기록
 - 기록 구간 재생과 H.264 MP4 생성
 - Linux AMD64 비root Container와 Public GHCR(GitHub Container Registry) 이미지
@@ -93,6 +94,9 @@ endpoint 쌍 중 하나만 설정한다. `DURATION_S`와 `TIME_SCALE`은 함께 
 숫자 형식이나 설정 조합이 유효하지 않으면 프로그램은 오류를 출력하고 종료 code 2를
 반환한다. 전체 범위와 자원 상한은 [실행 환경](docs/deployment.md)에 정의돼 있다.
 
+Browser preview는 설정한 camera의 프레임과 상면 높이 지도를 함께 제공한다. Replay MP4는
+`LIDAR_VISUALIZER_CAMERA`로 선택한 camera의 프레임만 포함한다.
+
 ## 개발 및 검증
 
 사전 조건은 Python 3.14.7, uv 0.12.13과 Docker Engine이다. Repository 루트에서 고정된
@@ -169,11 +173,13 @@ docker container ps --filter name=scrap-monitoring-lidar-visualizer
 docker container logs scrap-monitoring-lidar-visualizer
 curl --fail http://<visualizer-host>:18000/status
 curl --fail --output frame.png http://<visualizer-host>:18000/frame.png
+curl --fail --output frame-top.png http://<visualizer-host>:18000/frame-top.png
 ```
 
-Browser에서 `http://<visualizer-host>:18000/`을 열면 최신 프레임과 상태를 확인할 수 있다.
-첫 유효 관찰 전에는 `/frame.png`가 204를 반환한다. `/status`의 `received_sequence`와
-`rendered_sequence`가 값으로 채워지면 수신과 렌더링이 완료된 상태다.
+Browser에서 `http://<visualizer-host>:18000/`을 열면 설정한 camera의 최신 프레임, 같은
+revision의 상면 높이 지도와 상태를 확인할 수 있다. 첫 유효 관찰 전에는 `/frame.png`와
+`/frame-top.png`가 204를 반환한다. `/status`의 `received_sequence`와 `rendered_sequence`가
+값으로 채워지면 수신과 렌더링이 완료된 상태다.
 
 관찰 기록을 활성화하려면 UID(User Identifier)와 GID(Group Identifier) 10001이 쓸 수 있는
 host directory를 준비하고 Live 명령에 기록 mount와 환경 변수를 추가한다.

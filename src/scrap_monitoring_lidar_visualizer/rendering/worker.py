@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import multiprocessing as mp
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from queue import Empty, Full
 from typing import Any
@@ -25,6 +25,7 @@ class RenderRequest:
     config: RenderConfig
     temp_dir: Path | None = None
     connection_label: str | None = None
+    render_top_view: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,6 +34,7 @@ class RenderOutcome:
     run_id: str
     sequence: int
     png: bytes | None
+    top_png: bytes | None
     error: str | None
 
 
@@ -54,11 +56,27 @@ def _render(generation: int, request: RenderRequest) -> RenderOutcome:
                 connection_label=request.connection_label,
             )
             png = path.read_bytes()
+            if not request.render_top_view or request.config.camera == "top":
+                top_png = png
+            else:
+                top_path = Path(directory) / "frame-top.png"
+                render_scene(
+                    top_path,
+                    request.header,
+                    request.observation,
+                    geometry,
+                    config=replace(request.config, camera="top"),
+                    connected=request.connected,
+                    missing_sequences=request.missing_sequences,
+                    connection_label=request.connection_label,
+                )
+                top_png = top_path.read_bytes()
         return RenderOutcome(
             generation=generation,
             run_id=request.observation.run_id,
             sequence=request.observation.sequence,
             png=png,
+            top_png=top_png,
             error=None,
         )
     except Exception as error:
@@ -67,6 +85,7 @@ def _render(generation: int, request: RenderRequest) -> RenderOutcome:
             run_id=request.observation.run_id,
             sequence=request.observation.sequence,
             png=None,
+            top_png=None,
             error=str(error),
         )
 
@@ -134,10 +153,15 @@ class LatestRenderWorker:
         self._flush_pending()
         if latest is None or latest.generation != self._generation:
             return None
-        if latest.error is not None or latest.png is None:
+        if latest.error is not None or latest.png is None or latest.top_png is None:
             self.last_error = latest.error or "renderer returned no frame"
             return latest
-        self._frames.publish(latest.png, run_id=latest.run_id, sequence=latest.sequence)
+        self._frames.publish(
+            latest.png,
+            latest.top_png,
+            run_id=latest.run_id,
+            sequence=latest.sequence,
+        )
         self.last_error = None
         return latest
 

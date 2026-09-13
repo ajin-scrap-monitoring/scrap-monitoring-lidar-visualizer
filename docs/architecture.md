@@ -110,7 +110,7 @@ snapshot은 1개로 제한된다. 이 방식으로 수신 event loop에서 렌�
 | --- | --- | --- |
 | 렌더링 대기 snapshot | 최신 1개 | 새 관찰로 교체 |
 | 기록 대기열 | 최대 128개 레코드 및 총 8 MiB(Mebibyte) | 수락한 prefix를 기록하고 기록 종료 |
-| preview 프레임 | 최신 완성 프레임 1개 | 프레임과 식별 정보를 함께 교체 |
+| preview 프레임 묶음 | 최신 camera 프레임과 상면 지도 각 1개 | 두 프레임과 식별 정보를 함께 교체 |
 | HTTP 요청 | 동시 처리 최대 16개, 요청 제한 시간 5초 | 초과 요청 거부와 지연 연결 종료 |
 
 주 프로세스는 기록 대기열 포화 시 이후 레코드의 기록을 중단하고 `queue_full` 사유를
@@ -156,32 +156,40 @@ observation은 거부 건수를 표시하고 다음 레코드를 처리한다. �
 Geometry는 polygon의 방향과 시작 vertex를 정규화하고 고정 순서의 ear clipping으로 바닥을
 삼각분할한다. Self-intersection과 퇴화 경계는 의미 검증 오류로 처리한다.
 
-격자는 `index = y_index * x_count + x_index` 순서로 vertex를 구성한다. 각 cell은
+격자는 `index = y_index * x_count + x_index` 순서로 vertex를 구성한다. 각 observation은
+전체 X, Y 좌표와 Y x X 높이 행렬을 포함하며 이전 표면에 적용하는 변경분으로 처리하지
+않는다. 각 cell은
 `(y, x)`와 `(y + 1, x + 1)`을 잇는 대각선으로 분할한다. 경계 삼각형과 표면 삼각형의
 교집합을 계산하고 교차점의 Z 값은 원래 표면 삼각형에서 선형 보간한다. 교집합 polygon은
 고정 순서로 삼각분할하며 vertex와 face의 출력 순서를 정규화한다.
 
-이 계산은 concave 경계와 경계를 가로지르는 cell을 처리한다. 경계 안에 중심점이 있는
-cell만 선택하는 방식으로 clipping을 대체하지 않는다. 투입구는 header의 정적 장면에서
+표면 mesh의 외곽 edge는 각 꼭짓점에서 `floor_z_m`까지 내려 적재 체적의 옆면을 구성한다.
+수거가 끝나 모든 표면 높이가 바닥 높이와 같으면 퇴화한 옆면은 생성하지 않는다. 이 계산은
+concave 경계와 경계를 가로지르는 cell을 처리한다. 경계 안에 중심점이 있는 cell만 선택하는
+방식으로 clipping을 대체하지 않는다. 투입구는 header의 정적 장면에서
 구성하고 filling 상태의 활성 투입구는 observation에 맞춰 표시한다. Sensor는 `p0_m`에서
 시작해 오른손 좌표계의 `u0 x u90` 회전축 방향을 향하는 arrow 하나로 표시한다. 사선과 상면
-camera는 거리에 따른 크기 변화를 제거한 직교 투영을 사용한다. 장면은 밝은 중립 배경,
-회색 바닥과 반투명 외벽, 진한 mesh edge와 overlay로 빈 공간과 적재 표면을 구분한다.
+camera는 거리에 따른 크기 변화를 제거한 직교 투영을 사용한다. 적재 표면과 체적 옆면은
+`floor_z_m`부터 `top_z_m`까지 고정한 노랑-주황-적색 높이 범례를 사용한다. 장면은 밝은 중립
+배경, 회색 바닥과 반투명 외벽, 중립 회색 mesh edge와 overlay로 빈 공간과 적재 형상을
+구분한다.
 
 ## Preview 인터페이스
 
-Preview 경로는 다음 3개다. Live와 replay는 같은 경로를 사용한다.
+Preview 경로는 다음 4개다. Live와 replay는 같은 경로를 사용한다.
 
 | 경로 | 응답 |
 | --- | --- |
 | `GET /` | 서버 프레임과 상태를 표시하는 브라우저 화면 |
 | `GET /frame.png` | 최신 프레임 및 frame revision, 프레임 준비 전 204 |
+| `GET /frame-top.png` | 같은 revision의 최신 상면 높이 지도, 프레임 준비 전 204 |
 | `GET /status` | 연결, 실행, 수신 및 렌더링 sequence, 누락, 마지막 정상 수신 시각과 기록 상태 |
 
-브라우저는 이전 요청이 끝난 뒤 다음 요청을 보낸다. HTTP 요청은 보관된 프레임과 상태를
-읽으며 렌더링을 직접 시작하지 않는다. 상태에는 최신 수신 sequence와 화면에 반영된
-sequence를 구분하여 렌더링 지연을 표시한다. 프레임 응답 header는 frame revision과
-sequence를 제공하고 캐시로 이전 프레임을 재사용하지 않게 한다.
+렌더링 worker는 설정한 camera 프레임과 상면 높이 지도를 순서대로 만든 뒤 하나의 revision으로
+교체한다. Browser는 두 프레임을 나란히 표시하고 이전 요청이 끝난 뒤 다음 요청을 보낸다.
+HTTP 요청은 보관된 프레임과 상태를 읽으며 렌더링을 직접 시작하지 않는다. 상태에는 최신
+수신 sequence와 화면에 반영된 sequence를 구분하여 렌더링 지연을 표시한다. 프레임 응답
+header는 frame revision과 sequence를 제공하고 캐시로 이전 프레임을 재사용하지 않게 한다.
 
 ## Replay와 영상
 
