@@ -51,13 +51,17 @@ digest를 전체 컨테이너 검사에 사용한다. Package 공개 범위를 �
 archive, image digest, release metadata, 의존성 inventory, 고지와 SHA-256 checksum을 draft
 Release에 올리고 최종 게시한다.
 
-[v0.1.1 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/releases/tag/v0.1.1)는
-source commit `2657f59d07d8ba383b59bdcf539434d2b3188d81`에서 생성됐다. Release asset 7개의
+[v0.2.0 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/releases/tag/v0.2.0)는
+source commit `621507fac42a16410ba260f7989dde4e0907cbf0`에서 생성됐다. Release asset 7개의
 SHA-256 checksum, 설치 wheel의 계약 parsing, SLSA(Supply-chain Levels for Software
 Artifacts) provenance와 SPDX(Software Package Data Exchange) 2.3 SBOM을 검증했다.
 Package는 Public이며 인증 정보가 없는 Docker 설정으로 digest image를 가져올 수 있다.
 
-현재 배포 image의 불변 참조는 Release asset `oci-image.txt`에 있다.
+현재 배포 image의 불변 참조는 Release asset `oci-image.txt`와 다음 값이다.
+
+```text
+ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:a832cc5e6ec6ece5cb4b2c7b0f68c37631fb32d267c0481e7d6a7759834e28c6
+```
 
 ## 자원 기준
 
@@ -77,12 +81,12 @@ Package는 Public이며 인증 정보가 없는 Docker 설정으로 digest image
 경계 polygon은 최대 vertex 1,024개를 허용한다. 수치 상한의 정본은
 [`limits.py`](../src/scrap_monitoring_lidar_visualizer/limits.py)다.
 
-2026-09-12 Linux AMD64 host에서 Docker Engine 29.5.2로 측정한 결과는 다음과 같다.
+2026-09-13 Linux AMD64 host에서 Docker Engine 29.5.2로 측정한 결과는 다음과 같다.
 
 | 입력 | Frame | 총 rendering | 최대 RSS |
 | --- | --- | --- | --- |
-| 격자 node 825개 | 640 x 360, 10 frame | 0.580초 | 367.535 MiB |
-| 격자 node 262,144개 | 640 x 360, 1 frame | 0.575초 | 457.273 MiB |
+| 격자 node 825개 | 640 x 360, 10 frame | 0.540초 | 368.309 MiB |
+| 격자 node 262,144개 | 640 x 360, 1 frame | 0.637초 | 457.660 MiB |
 
-현재 image 크기는 395.351 MiB다. 측정값은 성능 보장이 아니라 동일 상한에서 회귀를 비교하기
+현재 image 크기는 395.356 MiB다. 측정값은 성능 보장이 아니라 동일 상한에서 회귀를 비교하기
 위한 기준이다.

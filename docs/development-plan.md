@@ -8,10 +8,8 @@
 
 ## 현재 상태
 
-P0부터 P7까지 구현과 검증이 완료됐다. P8의 환경 변수 설정 계층, 사용자 문서와 로컬
-Container 검증이 완료됐으며 게시 이미지 검증을 진행한다. 현재 GitHub Release, Python
-package와 Public GHCR image의 불변 참조 및 검증 상태는 [실행 환경](deployment.md)에서
-관리한다.
+P0부터 P8까지 구현과 검증이 완료됐다. 현재 GitHub Release, Python package와 Public GHCR
+image의 불변 참조 및 검증 상태는 [실행 환경](deployment.md)에서 관리한다.
 
 고정 계약의 원본과 해시는 [provenance.json](../contracts/observation/v1/provenance.json)에
 있다. 해당 사본은 로컬 생성기 저장소의 지정 commit에서 가져온 공개 합성 계약이다.
@@ -33,10 +31,10 @@ Schema가 표현하지 않는 조건과 명세의 추가 수신 및 preview 요�
 | P5 | Live CLI(Command-Line Interface)와 HTTP(Hypertext Transfer Protocol) preview 통합 | P3, P4 | 완료 |
 | P6 | 기록 재생과 MP4 출력 | P3, P4, P5 | 완료 |
 | P7 | 컨테이너 및 릴리스 검증 | P5, P6 | 완료 |
-| P8 | Container 환경 변수와 사용자 배포 절차 | P7 | 진행 중 |
+| P8 | Container 환경 변수와 사용자 배포 절차 | P7 | 완료 |
 
-P8은 게시된 v0.2.0 image 검증과 Release 상태 동기화를 남겨 두고 있다. P1에서 고정한
-Python, OSMesa와 FFmpeg 조합 및 자원 기준은 [실행 환경](deployment.md)을 따른다.
+현재 단계의 구현 작업은 모두 완료됐다. P1에서 고정한 Python, OSMesa와 FFmpeg 조합 및
+자원 기준은 [실행 환경](deployment.md)을 따른다.
 
 ## P0. 프로젝트 기준 구성
 
