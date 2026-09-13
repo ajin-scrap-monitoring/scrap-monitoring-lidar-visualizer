@@ -40,8 +40,8 @@ async def _request(port: int, path: str) -> tuple[int, dict[str, str], bytes]:
 def test_latest_frame_store_replaces_without_history() -> None:
     store = LatestFrameStore()
 
-    first = store.publish(b"first", b"first top", run_id="run", sequence=1)
-    second = store.publish(b"second", b"second top", run_id="run", sequence=2)
+    first = store.publish(b"first", b"first top", sequence=1)
+    second = store.publish(b"second", b"second top", sequence=2)
 
     assert first.revision == 1
     assert first.top_png == b"first top"
@@ -77,7 +77,6 @@ def test_renderer_invalidation_discards_previous_run_outcome() -> None:
     worker._outcomes.put(
         RenderOutcome(
             generation=1,
-            run_id="old-run",
             sequence=9,
             png=b"old frame",
             top_png=b"old top frame",
@@ -112,7 +111,6 @@ def test_renderer_sends_latest_pending_request_after_inflight_finishes() -> None
     worker._outcomes.put(
         RenderOutcome(
             generation=0,
-            run_id="old-run",
             sequence=1,
             png=None,
             top_png=None,
@@ -158,7 +156,6 @@ def test_preview_http_endpoints_return_latest_frame() -> None:
             frames.publish(
                 b"\x89PNG\r\n\x1a\nframe",
                 b"\x89PNG\r\n\x1a\ntop-frame",
-                run_id="run-a\nunsafe",
                 sequence=7,
             )
             status, headers, body = await _request(port, "/frame.png")
@@ -185,6 +182,7 @@ def test_preview_http_endpoints_return_latest_frame() -> None:
             assert status == 200
             assert b"/frame.png?revision=" in body
             assert b"/frame-top.png?revision=" in body
+            assert b"status.frame_revision!==displayedRevision" in body
         finally:
             server.should_exit = True
             await task

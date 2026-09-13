@@ -13,12 +13,11 @@ from scrap_monitoring_lidar_visualizer.contracts import (
 from scrap_monitoring_lidar_visualizer.geometry import build_scene_geometry
 from scrap_monitoring_lidar_visualizer.rendering import RenderConfig, describe_scene
 from scrap_monitoring_lidar_visualizer.rendering.renderer import (
-    HEIGHT_LEGEND_TITLE,
-    HEIGHT_SCALAR_BAR_ARGS,
     HEIGHT_SCALAR_NAME,
     _apply_camera,
     _height_poly_data,
-    _sensor_rotation_axis,
+    _height_scale,
+    _height_tick_levels,
 )
 
 CONTRACT_ROOT = Path("contracts/observation/v1")
@@ -84,14 +83,6 @@ def test_camera_uses_parallel_projection() -> None:
     assert plotter.parallel_projection
 
 
-def test_sensor_marker_uses_right_handed_rotation_axis(
-    records: tuple[Header, Observation],
-) -> None:
-    header, _ = records
-
-    assert _sensor_rotation_axis(header.scene.sensors[0]) == (0.0, -1.0, 0.0)
-
-
 def test_height_mesh_uses_absolute_vertex_z_values(
     records: tuple[Header, Observation],
 ) -> None:
@@ -104,14 +95,27 @@ def test_height_mesh_uses_absolute_vertex_z_values(
     ]
 
 
-def test_height_legend_reserves_space_between_title_and_scale() -> None:
-    assert HEIGHT_LEGEND_TITLE == "Surface height (m)"
-    assert HEIGHT_SCALAR_BAR_ARGS["title"] == ""
-    assert (
-        float(HEIGHT_SCALAR_BAR_ARGS["position_y"])
-        + float(HEIGHT_SCALAR_BAR_ARGS["height"])
-        <= 0.75
-    )
+def test_height_ticks_use_two_meter_intervals_and_include_bounds() -> None:
+    assert _height_tick_levels(0.0, 10.0) == (0.0, 2.0, 4.0, 6.0, 8.0, 10.0)
+    assert _height_tick_levels(-0.5, 3.5) == (-0.5, 0.0, 2.0, 3.5)
+
+
+def test_height_scale_uses_screen_right_boundary_edge(
+    records: tuple[Header, Observation],
+) -> None:
+    header, observation = records
+    camera_position = describe_scene(
+        header,
+        observation,
+        config=RenderConfig(camera="isometric"),
+        connected=True,
+    ).camera_position
+    scale = _height_scale(header, camera_position)
+
+    assert scale.line_points[0][:2] == scale.line_points[1][:2]
+    assert scale.line_points[0][2] == header.scene.floor_z_m
+    assert scale.line_points[1][2] == header.scene.top_z_m
+    assert scale.labels == ("0 m", "1 m")
 
 
 def test_scene_description_contains_required_overlay_and_camera(
@@ -123,21 +127,20 @@ def test_scene_description_contains_required_overlay_and_camera(
         observation,
         config=RenderConfig(camera="isometric"),
         connected=True,
-        missing_sequences=3,
     )
     top = describe_scene(
         header,
         observation,
         config=RenderConfig(camera="top"),
         connected=False,
-        missing_sequences=3,
     )
 
     assert isometric.camera_position != top.camera_position
     assert isometric.active_inlet_index == 0
     assert "sequence: 1" in isometric.overlay
     assert "connection: connected" in isometric.overlay
-    assert "missing_sequences: 3" in top.overlay
+    assert "run:" not in isometric.overlay
+    assert "missing_sequences:" not in top.overlay
     assert "connection: disconnected" in top.overlay
 
 
@@ -156,7 +159,6 @@ def test_collecting_scene_has_no_active_inlet(
         collecting,
         config=RenderConfig(),
         connected=True,
-        missing_sequences=0,
     )
 
     assert description.active_inlet_index is None

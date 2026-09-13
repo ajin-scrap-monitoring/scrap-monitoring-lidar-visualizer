@@ -85,7 +85,6 @@ class LiveCoordinator:
                 header=state.header,
                 observation=observation,
                 connected=state.connected,
-                missing_sequences=state.missing_sequences,
                 config=self._render_config,
             )
         )

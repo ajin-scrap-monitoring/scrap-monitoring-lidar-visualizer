@@ -19,14 +19,12 @@ class RenderRequest:
     header: Header
     observation: Observation
     connected: bool
-    missing_sequences: int
     config: RenderConfig
 
 
 @dataclass(frozen=True, slots=True)
 class RenderOutcome:
     generation: int
-    run_id: str
     sequence: int
     png: bytes | None
     top_png: bytes | None
@@ -42,7 +40,6 @@ def _render(generation: int, request: RenderRequest) -> RenderOutcome:
             geometry,
             config=request.config,
             connected=request.connected,
-            missing_sequences=request.missing_sequences,
         )
         if request.config.camera == "top":
             top_png = png
@@ -53,11 +50,9 @@ def _render(generation: int, request: RenderRequest) -> RenderOutcome:
                 geometry,
                 config=replace(request.config, camera="top"),
                 connected=request.connected,
-                missing_sequences=request.missing_sequences,
             )
         return RenderOutcome(
             generation=generation,
-            run_id=request.observation.run_id,
             sequence=request.observation.sequence,
             png=png,
             top_png=top_png,
@@ -66,7 +61,6 @@ def _render(generation: int, request: RenderRequest) -> RenderOutcome:
     except Exception as error:
         return RenderOutcome(
             generation=generation,
-            run_id=request.observation.run_id,
             sequence=request.observation.sequence,
             png=None,
             top_png=None,
@@ -143,7 +137,6 @@ class LatestRenderWorker:
         self._frames.publish(
             latest.png,
             latest.top_png,
-            run_id=latest.run_id,
             sequence=latest.sequence,
         )
         self.last_error = None
