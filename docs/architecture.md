@@ -165,7 +165,8 @@ Geometry는 polygon의 방향과 시작 vertex를 정규화하고 고정 순서�
 cell만 선택하는 방식으로 clipping을 대체하지 않는다. 투입구는 header의 정적 장면에서
 구성하고 filling 상태의 활성 투입구는 observation에 맞춰 표시한다. Sensor는 `p0_m`에서
 시작해 오른손 좌표계의 `u0 x u90` 회전축 방향을 향하는 arrow 하나로 표시한다. 사선과 상면
-camera는 거리에 따른 크기 변화를 제거한 직교 투영을 사용한다.
+camera는 거리에 따른 크기 변화를 제거한 직교 투영을 사용한다. 장면은 밝은 중립 배경,
+회색 바닥과 반투명 외벽, 진한 mesh edge와 overlay로 빈 공간과 적재 표면을 구분한다.
 
 ## Preview 인터페이스
 
