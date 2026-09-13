@@ -162,8 +162,10 @@ Geometry는 polygon의 방향과 시작 vertex를 정규화하고 고정 순서�
 고정 순서로 삼각분할하며 vertex와 face의 출력 순서를 정규화한다.
 
 이 계산은 concave 경계와 경계를 가로지르는 cell을 처리한다. 경계 안에 중심점이 있는
-cell만 선택하는 방식으로 clipping을 대체하지 않는다. 외벽, sensor와 투입구는 header의
-정적 장면에서 구성하고 filling 상태의 활성 투입구는 observation에 맞춰 표시한다.
+cell만 선택하는 방식으로 clipping을 대체하지 않는다. 투입구는 header의 정적 장면에서
+구성하고 filling 상태의 활성 투입구는 observation에 맞춰 표시한다. Sensor는 `p0_m`에서
+시작해 오른손 좌표계의 `u0 x u90` 회전축 방향을 향하는 arrow 하나로 표시한다. 사선과 상면
+camera는 거리에 따른 크기 변화를 제거한 직교 투영을 사용한다.
 
 ## Preview 인터페이스
 

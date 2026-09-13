@@ -22,6 +22,10 @@ if [[ "${SKIP_IMAGE_BUILD:-false}" != "true" ]]; then
   docker build --platform linux/amd64 --tag "${image}" .
 fi
 
+exposed_ports="$(docker image inspect --format '{{json .Config.ExposedPorts}}' "${image}")"
+readonly exposed_ports
+test "$(jq -r 'keys | join(" ")' <<<"${exposed_ports}")" = "17000/tcp 18000/tcp"
+
 readonly -a runtime_options=(
   --rm
   --platform linux/amd64
@@ -108,6 +112,7 @@ test -s "${probe_root}/output/probe/probe.mp4"
 test "$(jq -r '.display_present' "${probe_root}/output/scene/scene.json")" = "false"
 test "$(jq -r '.euid' "${probe_root}/output/scene/scene.json")" = "10001"
 test "$(jq -r '.render_window' "${probe_root}/output/scene/scene.json")" = "vtkOSOpenGLRenderWindow"
+test "$(jq -r '.parallel_projection' "${probe_root}/output/scene/scene.json")" = "true"
 test "$(jq -r '.width' "${probe_root}/output/scene/scene.json")" = "640"
 test "$(jq -r '.height' "${probe_root}/output/scene/scene.json")" = "360"
 test "$(jq -r '.surface_faces > 0' "${probe_root}/output/scene/scene.json")" = "true"

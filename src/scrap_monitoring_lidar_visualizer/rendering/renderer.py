@@ -9,7 +9,11 @@ from typing import Literal
 import numpy as np
 import pyvista as pv
 
-from scrap_monitoring_lidar_visualizer.contracts.models import Header, Observation
+from scrap_monitoring_lidar_visualizer.contracts.models import (
+    Header,
+    Observation,
+    Sensor,
+)
 from scrap_monitoring_lidar_visualizer.geometry import Mesh, SceneGeometry
 from scrap_monitoring_lidar_visualizer.limits import (
     DEFAULT_FRAME_HEIGHT,
@@ -40,6 +44,7 @@ class RenderResult:
     width: int
     height: int
     render_window: str
+    parallel_projection: bool
     surface_vertices: int
     surface_faces: int
 
@@ -53,6 +58,29 @@ class SceneDescription:
     ]
     overlay: str
     active_inlet_index: int | None
+
+
+def _apply_camera(
+    plotter: pv.Plotter,
+    camera_position: tuple[
+        tuple[float, float, float],
+        tuple[float, float, float],
+        tuple[float, float, float],
+    ],
+) -> None:
+    plotter.reset_camera()  # type: ignore[call-arg]
+    plotter.camera_position = camera_position
+    plotter.enable_parallel_projection()  # type: ignore[call-arg]
+
+
+def _sensor_rotation_axis(sensor: Sensor) -> tuple[float, float, float]:
+    u0_x, u0_y, u0_z = sensor.u0
+    u90_x, u90_y, u90_z = sensor.u90
+    return (
+        u0_y * u90_z - u0_z * u90_y,
+        u0_z * u90_x - u0_x * u90_z,
+        u0_x * u90_y - u0_y * u90_x,
+    )
 
 
 def _poly_data(mesh: Mesh) -> pv.PolyData:
@@ -184,13 +212,9 @@ def render_scene(
         )
         for sensor in header.scene.sensors:
             plotter.add_mesh(
-                pv.Sphere(radius=0.025 * marker_scale, center=sensor.p0_m),
-                color="#61AFEF",
-            )
-            plotter.add_mesh(
                 pv.Arrow(
                     start=sensor.p0_m,
-                    direction=sensor.u0,
+                    direction=_sensor_rotation_axis(sensor),
                     scale=0.2 * marker_scale,
                 ),
                 color="#61AFEF",
@@ -210,8 +234,10 @@ def render_scene(
             font_size=10,
             color="#F1F5F9",
         )
-        plotter.reset_camera()  # type: ignore[call-arg]
-        plotter.camera_position = description.camera_position
+        _apply_camera(plotter, description.camera_position)
+        parallel_projection = bool(plotter.camera.parallel_projection)
+        if not parallel_projection:
+            raise RuntimeError("camera did not enable parallel projection")
         plotter.render()
         render_window = type(plotter.render_window).__name__
         if render_window != EXPECTED_RENDER_WINDOW:
@@ -226,6 +252,7 @@ def render_scene(
         width=config.width,
         height=config.height,
         render_window=render_window,
+        parallel_projection=parallel_projection,
         surface_vertices=len(geometry.surface.vertices),
         surface_faces=len(geometry.surface.faces),
     )
