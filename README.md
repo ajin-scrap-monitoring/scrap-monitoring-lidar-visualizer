@@ -53,7 +53,8 @@ docker run --rm \
 
 실행 설정은 CLI(Command-Line Interface) 인자, `LIDAR_VISUALIZER_` 환경 변수, 코드 기본값
 순서로 결정한다. 실행 mode인 `live` 또는 `replay`와 Replay의 JSON Lines 입력 경로는
-command로 지정한다. 환경 변수 17개는 공통 5개, Live 전용 5개와 Replay 전용 7개다.
+command로 지정한다. Repository 루트의 [`.env.example`](.env.example)은 기본 Live 실행값과
+선택 설정 예시를 제공한다. 환경 변수 17개는 공통 5개, Live 전용 5개와 Replay 전용 7개다.
 
 공통 설정은 다음과 같다.
 
@@ -113,16 +114,14 @@ scripts/check-headless-container.sh
 
 Live Container는 TCP 7000에서 관찰 데이터를 받고 HTTP 8000에서 미리보기를 제공한다.
 실제 사설 주소와 운영 설정은 이미지에 포함하지 않고 배포 환경에서 주입한다. 다음 명령은
-기록 기능을 사용하지 않는 기본 배포다.
+기록 기능을 사용하지 않는 기본 배포다. Repository를 Checkout한 배포 host에서 공개 예제를
+Git이 추적하지 않는 `.env`로 복사한다.
 
-배포 host에 `/path/to/visualizer.env`를 준비한다.
-
-```dotenv
-LIDAR_VISUALIZER_TCP_HOST=0.0.0.0
-LIDAR_VISUALIZER_TCP_PORT=7000
-LIDAR_VISUALIZER_HTTP_HOST=0.0.0.0
-LIDAR_VISUALIZER_HTTP_PORT=8000
+```bash
+cp .env.example .env
 ```
+
+기본 listen 주소와 port를 변경해야 하면 `.env`의 TCP와 HTTP 값을 배포 환경에 맞게 수정한다.
 
 ```bash
 IMAGE_REF="$(
@@ -145,7 +144,7 @@ docker run --detach \
   --log-opt max-file=3 \
   --publish 7000:7000 \
   --publish 8000:8000 \
-  --env-file /path/to/visualizer.env \
+  --env-file .env \
   "$IMAGE_REF" \
   live
 ```
@@ -179,17 +178,8 @@ Browser에서 `http://<visualizer-host>:8000/`을 열면 최신 프레임과 상
 관찰 기록을 활성화하려면 UID(User Identifier)와 GID(Group Identifier) 10001이 쓸 수 있는
 host directory를 준비하고 Live 명령에 기록 mount와 환경 변수를 추가한다.
 
-배포 host에 `/path/to/visualizer-recording.env`를 준비한다.
-
-```dotenv
-LIDAR_VISUALIZER_TCP_HOST=0.0.0.0
-LIDAR_VISUALIZER_TCP_PORT=7000
-LIDAR_VISUALIZER_HTTP_HOST=0.0.0.0
-LIDAR_VISUALIZER_HTTP_PORT=8000
-LIDAR_VISUALIZER_RECORD_PATH=/data/observations.ndjson
-LIDAR_VISUALIZER_RECORD_MAX_BYTES=104857600
-LIDAR_VISUALIZER_RECORD_MAX_RECORDS=100000
-```
+`.env`에서 `LIDAR_VISUALIZER_RECORD_PATH`, `LIDAR_VISUALIZER_RECORD_MAX_BYTES`와
+`LIDAR_VISUALIZER_RECORD_MAX_RECORDS`의 주석을 제거한다.
 
 ```bash
 sudo install -d -o 10001 -g 10001 -m 0770 /path/to/visualizer-recordings
@@ -210,7 +200,7 @@ docker run --detach \
   --publish 7000:7000 \
   --publish 8000:8000 \
   --mount type=bind,src=/path/to/visualizer-recordings,dst=/data \
-  --env-file /path/to/visualizer-recording.env \
+  --env-file .env \
   "$IMAGE_REF" \
   live
 ```
