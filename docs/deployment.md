@@ -51,16 +51,16 @@ digest를 전체 컨테이너 검사에 사용한다. Package 공개 범위를 �
 archive, image digest, release metadata, 의존성 inventory, 고지와 SHA-256 checksum을 draft
 Release에 올리고 최종 게시한다.
 
-[v0.2.0 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/releases/tag/v0.2.0)는
-source commit `621507fac42a16410ba260f7989dde4e0907cbf0`에서 생성됐다. Release asset 7개의
-SHA-256 checksum, 설치 wheel의 계약 parsing, SLSA(Supply-chain Levels for Software
+[v0.3.1 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/releases/tag/v0.3.1)는
+source commit `2a1a099e61faf91966a4b25a709ecb516c84cb25`에서 생성됐다. Release asset 7개의
+SHA-256 checksum, wheel version, SLSA(Supply-chain Levels for Software
 Artifacts) provenance와 SPDX(Software Package Data Exchange) 2.3 SBOM을 검증했다.
 Package는 Public이며 인증 정보가 없는 Docker 설정으로 digest image를 가져올 수 있다.
 
 현재 배포 image의 불변 참조는 Release asset `oci-image.txt`와 다음 값이다.
 
 ```text
-ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:a832cc5e6ec6ece5cb4b2c7b0f68c37631fb32d267c0481e7d6a7759834e28c6
+ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:b5963d2b23d90851e000e2d539e89a5d83d0b6b5c3542d9c7c97b3e1877e40f6
 ```
 
 ## 자원 기준
@@ -85,8 +85,8 @@ ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:a832cc5e6
 
 | 입력 | Frame | 총 rendering | 최대 RSS |
 | --- | --- | --- | --- |
-| 격자 node 825개 | 640 x 360, 10 frame | 0.540초 | 368.309 MiB |
-| 격자 node 262,144개 | 640 x 360, 1 frame | 0.637초 | 457.660 MiB |
+| 격자 node 825개 | 640 x 360, 10 frame | 0.543초 | 367.977 MiB |
+| 격자 node 262,144개 | 640 x 360, 1 frame | 0.485초 | 456.820 MiB |
 
-현재 image 크기는 395.356 MiB다. 측정값은 성능 보장이 아니라 동일 상한에서 회귀를 비교하기
+현재 image 크기는 395.358 MiB다. 측정값은 성능 보장이 아니라 동일 상한에서 회귀를 비교하기
 위한 기준이다.
