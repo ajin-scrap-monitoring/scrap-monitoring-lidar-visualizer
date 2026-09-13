@@ -17,20 +17,19 @@ FROM ${PYTHON_IMAGE} AS runtime
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        ffmpeg=7:5.1.9-0+deb12u1 \
         libosmesa6=22.3.6-1+deb12u2 \
     && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid 10001 visualizer \
     && useradd --uid 10001 --gid visualizer --no-create-home --home-dir /tmp visualizer \
-    && mkdir /app /output \
-    && chown visualizer:visualizer /app /output
+    && mkdir /app \
+    && chown visualizer:visualizer /app
 
 COPY --from=builder --chown=visualizer:visualizer /app /app
 COPY --chown=visualizer:visualizer THIRD_PARTY_NOTICES.md /app/THIRD_PARTY_NOTICES.md
 
 ARG BUILD_REVISION=unknown
-ARG BUILD_VERSION=0.4.0
+ARG BUILD_VERSION=0.5.0
 
 LABEL org.opencontainers.image.description="Headless 3D visualizer for Scrap Monitoring LiDAR observations" \
       org.opencontainers.image.revision="${BUILD_REVISION}" \

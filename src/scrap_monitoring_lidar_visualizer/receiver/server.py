@@ -12,7 +12,6 @@ from scrap_monitoring_lidar_visualizer.contracts import (
     Header,
     Observation,
 )
-from scrap_monitoring_lidar_visualizer.recording import AsyncRecordWriter
 from scrap_monitoring_lidar_visualizer.state import (
     ExecutionState,
     StateError,
@@ -43,14 +42,12 @@ class ObservationReceiver:
         self,
         parser: ContractParser,
         *,
-        recorder: AsyncRecordWriter | None = None,
         header_timeout_s: float = 5.0,
         on_state: Callable[[ExecutionState], None] | None = None,
     ) -> None:
         if header_timeout_s <= 0:
             raise ValueError("header_timeout_s must be positive")
         self._parser = parser
-        self._recorder = recorder
         self._header_timeout_s = header_timeout_s
         self._on_state = on_state
         self._active = False
@@ -135,7 +132,7 @@ class ObservationReceiver:
             if not isinstance(parsed.value, Header):
                 raise _ConnectionRejected("first record must be a stream header")
             self.state = accept_header(self.state, parsed.value).state
-            self._accept_raw(parsed.raw_line)
+            self._record_acceptance()
             if self._on_state is not None:
                 self._on_state(self.state)
             return records[1:], framing_error
@@ -156,17 +153,15 @@ class ObservationReceiver:
                 last_error=str(error),
             )
             return
-        self._accept_raw(parsed.raw_line)
+        self._record_acceptance()
         if self._on_state is not None:
             self._on_state(self.state)
 
-    def _accept_raw(self, raw_line: bytes) -> None:
+    def _record_acceptance(self) -> None:
         self.snapshot = replace(
             self.snapshot,
             records_accepted=self.snapshot.records_accepted + 1,
         )
-        if self._recorder is not None:
-            self._recorder.submit(raw_line)
 
     def _connection_error(self, message: str) -> None:
         self.snapshot = replace(self.snapshot, last_error=message)

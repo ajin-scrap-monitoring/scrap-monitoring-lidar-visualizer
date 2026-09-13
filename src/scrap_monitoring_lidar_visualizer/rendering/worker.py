@@ -3,9 +3,7 @@
 from __future__ import annotations
 
 import multiprocessing as mp
-import tempfile
 from dataclasses import dataclass, replace
-from pathlib import Path
 from queue import Empty, Full
 from typing import Any
 
@@ -23,9 +21,6 @@ class RenderRequest:
     connected: bool
     missing_sequences: int
     config: RenderConfig
-    temp_dir: Path | None = None
-    connection_label: str | None = None
-    render_top_view: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -41,36 +36,25 @@ class RenderOutcome:
 def _render(generation: int, request: RenderRequest) -> RenderOutcome:
     try:
         geometry = build_scene_geometry(request.header, request.observation)
-        with tempfile.TemporaryDirectory(
-            prefix="lidar-render-", dir=request.temp_dir
-        ) as directory:
-            path = Path(directory) / "frame.png"
-            render_scene(
-                path,
+        png, _ = render_scene(
+            request.header,
+            request.observation,
+            geometry,
+            config=request.config,
+            connected=request.connected,
+            missing_sequences=request.missing_sequences,
+        )
+        if request.config.camera == "top":
+            top_png = png
+        else:
+            top_png, _ = render_scene(
                 request.header,
                 request.observation,
                 geometry,
-                config=request.config,
+                config=replace(request.config, camera="top"),
                 connected=request.connected,
                 missing_sequences=request.missing_sequences,
-                connection_label=request.connection_label,
             )
-            png = path.read_bytes()
-            if not request.render_top_view or request.config.camera == "top":
-                top_png = png
-            else:
-                top_path = Path(directory) / "frame-top.png"
-                render_scene(
-                    top_path,
-                    request.header,
-                    request.observation,
-                    geometry,
-                    config=replace(request.config, camera="top"),
-                    connected=request.connected,
-                    missing_sequences=request.missing_sequences,
-                    connection_label=request.connection_label,
-                )
-                top_png = top_path.read_bytes()
         return RenderOutcome(
             generation=generation,
             run_id=request.observation.run_id,

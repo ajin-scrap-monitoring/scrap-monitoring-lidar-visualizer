@@ -15,11 +15,12 @@ DIRECT_PYTHON_DEPENDENCIES = {
     "fastapi",
     "jsonschema",
     "numpy",
+    "pillow",
     "pyvista",
     "uvicorn",
     "vtk",
 }
-DIRECT_DEBIAN_DEPENDENCIES = {"ffmpeg", "libosmesa6"}
+DIRECT_DEBIAN_DEPENDENCIES = {"libosmesa6"}
 PROJECT_DISTRIBUTION = "scrap-monitoring-lidar-visualizer"
 LICENSE_MARKERS = ("LICENSE", "COPYING", "COPYRIGHT")
 NOTICE_MARKERS = (*LICENSE_MARKERS, "NOTICE", "AUTHORS")

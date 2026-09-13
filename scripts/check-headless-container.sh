@@ -19,7 +19,7 @@ trap cleanup EXIT
 install -d -m 0777 "${probe_root}/output"
 
 if [[ "${SKIP_IMAGE_BUILD:-false}" != "true" ]]; then
-  docker build --platform linux/amd64 --tag "${image}" .
+  docker build --load --platform linux/amd64 --tag "${image}" .
 fi
 
 exposed_ports="$(docker image inspect --format '{{json .Config.ExposedPorts}}' "${image}")"
@@ -40,6 +40,11 @@ readonly -a runtime_options=(
 )
 
 docker run "${runtime_options[@]}" \
+  --entrypoint sh \
+  "${image}" \
+  -c 'test ! -e /output && ! command -v ffmpeg >/dev/null'
+
+docker run "${runtime_options[@]}" \
   --mount "type=bind,source=${probe_root}/output,target=/output" \
   --entrypoint python \
   "${image}" \
@@ -48,7 +53,10 @@ docker run "${runtime_options[@]}" \
 
 cli_help="$(docker run "${runtime_options[@]}" "${image}" --help)"
 readonly cli_help
-grep -q '{live,replay}' <<<"${cli_help}"
+grep -q '{live}' <<<"${cli_help}"
+if grep -q 'replay' <<<"${cli_help}"; then
+  exit 1
+fi
 
 set +e
 environment_error="$({
@@ -64,13 +72,6 @@ set -e
 readonly environment_error environment_status
 test "${environment_status}" -eq 2
 grep -q 'TCP and HTTP endpoints must be different' <<<"${environment_error}"
-
-docker run "${runtime_options[@]}" \
-  --mount "type=bind,source=${probe_root}/output,target=/output" \
-  --env LIDAR_VISUALIZER_OUTPUT_PATH=/output/environment-replay.mp4 \
-  "${image}" \
-  replay /app/contracts/observation/v1/fixtures/observation.v1.jsonl
-test -s "${probe_root}/output/environment-replay.mp4"
 
 docker run "${runtime_options[@]}" \
   --mount "type=bind,source=${probe_root}/output,target=/output" \
@@ -93,28 +94,19 @@ docker run "${runtime_options[@]}" \
   -m scrap_monitoring_lidar_visualizer.live_probe \
   --output /output/live
 
-docker run "${runtime_options[@]}" \
-  --mount "type=bind,source=${probe_root}/output,target=/output" \
-  --entrypoint python \
-  "${image}" \
-  -m scrap_monitoring_lidar_visualizer.replay_probe \
-  --output /output/replay
-
 test "$(jq -r '.display_present' "${probe_root}/output/probe/probe.json")" = "false"
 test "$(jq -r '.euid' "${probe_root}/output/probe/probe.json")" = "10001"
 test "$(jq -r '.gpu_device_present' "${probe_root}/output/probe/probe.json")" = "false"
 test "$(jq -r '.render_window' "${probe_root}/output/probe/probe.json")" = "vtkOSOpenGLRenderWindow"
-test "$(jq -r '.frame_count' "${probe_root}/output/probe/probe.json")" = "10"
-test "$(jq -r '.width' "${probe_root}/output/probe/probe.json")" = "640"
-test "$(jq -r '.height' "${probe_root}/output/probe/probe.json")" = "360"
+test "$(jq -r '.width' "${probe_root}/output/probe/probe.json")" = "1280"
+test "$(jq -r '.height' "${probe_root}/output/probe/probe.json")" = "720"
 test -s "${probe_root}/output/probe/frame.png"
-test -s "${probe_root}/output/probe/probe.mp4"
 test "$(jq -r '.display_present' "${probe_root}/output/scene/scene.json")" = "false"
 test "$(jq -r '.euid' "${probe_root}/output/scene/scene.json")" = "10001"
 test "$(jq -r '.render_window' "${probe_root}/output/scene/scene.json")" = "vtkOSOpenGLRenderWindow"
 test "$(jq -r '.parallel_projection' "${probe_root}/output/scene/scene.json")" = "true"
-test "$(jq -r '.width' "${probe_root}/output/scene/scene.json")" = "640"
-test "$(jq -r '.height' "${probe_root}/output/scene/scene.json")" = "360"
+test "$(jq -r '.width' "${probe_root}/output/scene/scene.json")" = "1280"
+test "$(jq -r '.height' "${probe_root}/output/scene/scene.json")" = "720"
 test "$(jq -r '.surface_faces > 0' "${probe_root}/output/scene/scene.json")" = "true"
 test "$(jq -r '.volume_side_faces > 0' "${probe_root}/output/scene/scene.json")" = "true"
 test "$(jq -c '.height_range_m' "${probe_root}/output/scene/scene.json")" = '[0.0,1.0]'
@@ -134,21 +126,9 @@ test "$(jq -r '.top_frame_sequence' "${probe_root}/output/live/live.json")" = \
   "$(jq -r '.frame_sequence' "${probe_root}/output/live/live.json")"
 test "$(jq -r '.received_sequence' "${probe_root}/output/live/live.json")" = "1"
 test "$(jq -r '.rendered_sequence' "${probe_root}/output/live/live.json")" = "1"
+test "$(jq -r '.recording_present' "${probe_root}/output/live/live.json")" = "false"
 test -s "${probe_root}/output/live/live.png"
 test -s "${probe_root}/output/live/live-top.png"
-test "$(jq -r '.video_exists' "${probe_root}/output/replay/replay.json")" = "true"
-test "$(jq -r '.root_status' "${probe_root}/output/replay/replay.json")" = "200"
-test "$(jq -r '.root_has_preview' "${probe_root}/output/replay/replay.json")" = "true"
-test "$(jq -r '.root_has_top_preview' "${probe_root}/output/replay/replay.json")" = "true"
-test "$(jq -r '.frame_status' "${probe_root}/output/replay/replay.json")" = "200"
-test "$(jq -r '.top_frame_status' "${probe_root}/output/replay/replay.json")" = "200"
-test "$(jq -r '.status_code' "${probe_root}/output/replay/replay.json")" = "200"
-test "$(jq -r '.playback_complete' "${probe_root}/output/replay/replay.json")" = "true"
-test "$(jq -r '.playback_frame_count' "${probe_root}/output/replay/replay.json")" = "2"
-test "$(jq -r '.rendered_sequence' "${probe_root}/output/replay/replay.json")" = "1"
-test -s "${probe_root}/output/replay/replay-preview.png"
-test -s "${probe_root}/output/replay/replay-preview-top.png"
-test -s "${probe_root}/output/replay/replay.mp4"
 test "$(jq -r '.machine' "${probe_root}/output/dependency-inventory.json")" = "x86_64"
 test "$(jq -r '.python_distributions | length > 0' "${probe_root}/output/dependency-inventory.json")" = "true"
 test "$(jq -r '.debian_packages | length > 0' "${probe_root}/output/dependency-inventory.json")" = "true"
@@ -159,31 +139,9 @@ benchmark_json="$(
     "${image}" \
     -m scrap_monitoring_lidar_visualizer.runtime_probe \
     --output /tmp/benchmark \
-    --frame-count 1 \
     --grid-x 512 \
     --grid-y 512
 )"
 readonly benchmark_json
 test "$(jq -r '.grid_points' <<<"${benchmark_json}")" = "262144"
 printf '%s\n' "${benchmark_json}"
-
-docker run "${runtime_options[@]}" \
-  --mount "type=bind,source=${probe_root}/output,target=/output,readonly" \
-  --entrypoint ffprobe \
-  "${image}" \
-  -v error \
-  -select_streams v:0 \
-  -show_entries stream=codec_name,width,height \
-  -of default=noprint_wrappers=1 \
-  /output/probe/probe.mp4
-
-docker run "${runtime_options[@]}" \
-  --mount "type=bind,source=${probe_root}/output,target=/output,readonly" \
-  --entrypoint ffprobe \
-  "${image}" \
-  -v error \
-  -count_frames \
-  -select_streams v:0 \
-  -show_entries stream=codec_name,width,height,nb_read_frames \
-  -of default=noprint_wrappers=1 \
-  /output/replay/replay.mp4
