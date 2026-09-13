@@ -1,6 +1,6 @@
 import pytest
 
-from scrap_monitoring_lidar_visualizer.receiver import LineFramer, LineFramingError
+from scrap_monitoring_visualizer.receiver import LineFramer, LineFramingError
 
 
 def test_framer_assembles_split_and_merged_packets() -> None:

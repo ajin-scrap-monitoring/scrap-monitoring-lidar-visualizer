@@ -1,4 +1,4 @@
-# LiDAR 적재 모델 시각화 프로젝트 최소 명세
+# 적재 모델 시각화 프로젝트 최소 명세
 
 ## 문서 역할
 
@@ -10,15 +10,15 @@
 
 | 항목 | 결정 |
 | --- | --- |
-| 프로젝트 제목 | Scrap Monitoring LiDAR Visualizer |
-| 원격 저장소 | `ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer` |
+| 프로젝트 제목 | Scrap Monitoring Visualizer |
+| 원격 저장소 | `ajin-scrap-monitoring/scrap-monitoring-visualizer` |
 | 공개 범위 | Public |
 | 소스 이용 조건 | 별도 라이선스 부여 없음 |
 
 SSH 주소는 다음과 같다.
 
 ```text
-git@github.com:ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer.git
+git@github.com:ajin-scrap-monitoring/scrap-monitoring-visualizer.git
 ```
 
 ## 상위 컨텍스트
@@ -27,7 +27,7 @@ git@github.com:ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer.git
 
 1. `scrap-monitoring-lidar-generator`는 ARM64 edge device에서 적재 모델 관찰 stream을
    생성하고 TCP client로 전송한다.
-2. `scrap-monitoring-lidar-visualizer`는 Linux AMD64 시각화 server에서 TCP server로
+2. `scrap-monitoring-visualizer`는 Linux AMD64 시각화 server에서 TCP server로
    관찰 stream을 수신하고 현재 적재 모델을 headless 3D frame과 MP4로 rendering한다.
 3. 개발 장비의 browser는 시각화 server가 HTTP로 제공하는 live preview와 상태를
    표시하며 3D mesh를 직접 계산하거나 rendering하지 않는다.

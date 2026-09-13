@@ -1,4 +1,4 @@
-# Scrap Monitoring LiDAR Visualizer
+# Scrap Monitoring Visualizer
 
 Scrap Monitoring LiDAR Generator가 전송하는 적재 모델 관찰 데이터를 Linux AMD64 server에서
 검증하고 3D 프레임으로 렌더링하는 프로그램이다. 관찰 데이터는 원시 LiDAR scan이 아니라
@@ -28,12 +28,12 @@ cp .env.example .env
 
 IMAGE_REF="$(
   curl --fail --location --silent --show-error \
-    https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer/releases/latest/download/oci-image.txt
+    https://github.com/ajin-scrap-monitoring/scrap-monitoring-visualizer/releases/latest/download/oci-image.txt
 )"
 docker image pull "$IMAGE_REF"
 
 docker run --detach \
-  --name scrap-monitoring-lidar-visualizer \
+  --name scrap-monitoring-visualizer \
   --restart unless-stopped \
   --platform linux/amd64 \
   --read-only \
@@ -63,7 +63,7 @@ Browser에서 `http://127.0.0.1:18000/`을 열면 Live 화면이 표시된다. �
 
 ## 설정
 
-설정은 CLI(Command-Line Interface) 인자, `LIDAR_VISUALIZER_` 환경 변수, 코드 기본값
+설정은 CLI(Command-Line Interface) 인자, `SCRAP_MONITORING_VISUALIZER_` 환경 변수, 코드 기본값
 순서로 결정한다. Container 배포는 Repository 루트의 [`.env.example`](.env.example)을
 복사한 `.env`로 환경 변수를 주입한다. 프로그램은 시작할 때 환경 변수를 한 번 읽는다.
 
@@ -71,13 +71,13 @@ Browser에서 `http://127.0.0.1:18000/`을 열면 Live 화면이 표시된다. �
 
 | 환경 변수 | CLI option | 기본값 |
 | --- | --- | --- |
-| `LIDAR_VISUALIZER_TCP_HOST` | `--tcp-host` | `0.0.0.0` |
-| `LIDAR_VISUALIZER_TCP_PORT` | `--tcp-port` | `17000` |
-| `LIDAR_VISUALIZER_HTTP_HOST` | `--http-host` | `0.0.0.0` |
-| `LIDAR_VISUALIZER_HTTP_PORT` | `--http-port` | `18000` |
-| `LIDAR_VISUALIZER_CAMERA` | `--camera` | `isometric` |
-| `LIDAR_VISUALIZER_WIDTH` | `--width` | `1280` |
-| `LIDAR_VISUALIZER_HEIGHT` | `--height` | `720` |
+| `SCRAP_MONITORING_VISUALIZER_TCP_HOST` | `--tcp-host` | `0.0.0.0` |
+| `SCRAP_MONITORING_VISUALIZER_TCP_PORT` | `--tcp-port` | `17000` |
+| `SCRAP_MONITORING_VISUALIZER_HTTP_HOST` | `--http-host` | `0.0.0.0` |
+| `SCRAP_MONITORING_VISUALIZER_HTTP_PORT` | `--http-port` | `18000` |
+| `SCRAP_MONITORING_VISUALIZER_CAMERA` | `--camera` | `isometric` |
+| `SCRAP_MONITORING_VISUALIZER_WIDTH` | `--width` | `1280` |
+| `SCRAP_MONITORING_VISUALIZER_HEIGHT` | `--height` | `720` |
 
 `CAMERA`는 `isometric` 또는 `top`이다. Browser는 설정한 camera 프레임과 상면 높이 지도를
 나란히 표시한다. 해상도 상한은 3840 x 2160이다. TCP와 HTTP endpoint는 서로 달라야 하며,

@@ -15,7 +15,7 @@ def test_wheel_contains_fixed_contract_schemas(tmp_path: Path) -> None:
         text=True,
     )
     wheel = next(tmp_path.glob("*.whl"))
-    package = "scrap_monitoring_lidar_visualizer/contracts/schema/v1"
+    package = "scrap_monitoring_visualizer/contracts/schema/v1"
 
     with zipfile.ZipFile(wheel) as archive:
         for name in ("header.schema.json", "observation.schema.json"):

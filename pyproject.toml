@@ -3,7 +3,7 @@ requires = ["uv_build==0.12.13"]
 build-backend = "uv_build"
 
 [project]
-name = "scrap-monitoring-lidar-visualizer"
+name = "scrap-monitoring-visualizer"
 version = "1.0.0"
 description = "Headless renderer for Scrap Monitoring LiDAR observations"
 readme = "README.md"
@@ -19,7 +19,7 @@ dependencies = [
 ]
 
 [project.scripts]
-lidar-visualizer = "scrap_monitoring_lidar_visualizer.cli:main"
+scrap-monitoring-visualizer = "scrap_monitoring_visualizer.cli:main"
 
 [dependency-groups]
 dev = [

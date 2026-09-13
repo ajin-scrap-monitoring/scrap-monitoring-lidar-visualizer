@@ -11,12 +11,12 @@ import numpy as np
 import pyvista as pv
 from PIL import Image
 
-from scrap_monitoring_lidar_visualizer.contracts.models import (
+from scrap_monitoring_visualizer.contracts.models import (
     Header,
     Observation,
 )
-from scrap_monitoring_lidar_visualizer.geometry import Mesh, SceneGeometry
-from scrap_monitoring_lidar_visualizer.limits import (
+from scrap_monitoring_visualizer.geometry import Mesh, SceneGeometry
+from scrap_monitoring_visualizer.limits import (
     DEFAULT_FRAME_HEIGHT,
     DEFAULT_FRAME_WIDTH,
     MAX_FRAME_HEIGHT,

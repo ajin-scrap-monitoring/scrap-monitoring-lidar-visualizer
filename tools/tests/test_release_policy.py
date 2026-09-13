@@ -19,11 +19,11 @@ class ReleasePolicyTest(unittest.TestCase):
         self.git("config", "user.email", "fixture@example.invalid")
         self.git("config", "commit.gpgsign", "false")
         self.git("config", "tag.gpgsign", "false")
-        (self.root / "src/scrap_monitoring_lidar_visualizer").mkdir(parents=True)
+        (self.root / "src/scrap_monitoring_visualizer").mkdir(parents=True)
         (self.root / "pyproject.toml").write_text(
             '[project]\nversion = "1.2.3"\n', encoding="utf-8"
         )
-        (self.root / "src/scrap_monitoring_lidar_visualizer/__init__.py").write_text(
+        (self.root / "src/scrap_monitoring_visualizer/__init__.py").write_text(
             '__version__ = "1.2.3"\n', encoding="utf-8"
         )
         self.git("add", ".")
@@ -63,7 +63,7 @@ class ReleasePolicyTest(unittest.TestCase):
             validate_release(self.root, "v1.2.4", self.base)
 
     def test_version_declarations_must_match(self):
-        (self.root / "src/scrap_monitoring_lidar_visualizer/__init__.py").write_text(
+        (self.root / "src/scrap_monitoring_visualizer/__init__.py").write_text(
             '__version__ = "2.0.0"\n', encoding="utf-8"
         )
         with self.assertRaisesRegex(ValueError, "do not match"):

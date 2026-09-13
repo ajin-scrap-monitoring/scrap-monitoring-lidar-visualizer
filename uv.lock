@@ -942,7 +942,7 @@ wheels = [
 ]
 
 [[package]]
-name = "scrap-monitoring-lidar-visualizer"
+name = "scrap-monitoring-visualizer"
 version = "1.0.0"
 source = { editable = "." }
 dependencies = [

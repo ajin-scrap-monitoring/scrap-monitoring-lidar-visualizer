@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from scrap_monitoring_lidar_visualizer.contracts import ContractParser
-from scrap_monitoring_lidar_visualizer.receiver import ObservationReceiver
+from scrap_monitoring_visualizer.contracts import ContractParser
+from scrap_monitoring_visualizer.receiver import ObservationReceiver
 
 CONTRACT_ROOT = Path("contracts/observation/v1")
 FIXTURE_PATH = CONTRACT_ROOT / "fixtures/observation.v1.jsonl"

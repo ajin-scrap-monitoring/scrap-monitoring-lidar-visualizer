@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly image="${IMAGE_UNDER_TEST:-scrap-monitoring-lidar-visualizer:test}"
+readonly image="${IMAGE_UNDER_TEST:-scrap-monitoring-visualizer:test}"
 probe_root="$(mktemp -d)"
 readonly probe_root
 
@@ -48,7 +48,7 @@ docker run "${runtime_options[@]}" \
   --mount "type=bind,source=${probe_root}/output,target=/output" \
   --entrypoint python \
   "${image}" \
-  -m scrap_monitoring_lidar_visualizer.runtime_probe \
+  -m scrap_monitoring_visualizer.runtime_probe \
   --output /output/probe
 
 cli_help="$(docker run "${runtime_options[@]}" "${image}" --help)"
@@ -61,10 +61,10 @@ fi
 set +e
 environment_error="$({
   docker run "${runtime_options[@]}" \
-    --env LIDAR_VISUALIZER_TCP_HOST=127.0.0.1 \
-    --env LIDAR_VISUALIZER_TCP_PORT=8000 \
-    --env LIDAR_VISUALIZER_HTTP_HOST=127.0.0.1 \
-    --env LIDAR_VISUALIZER_HTTP_PORT=8000 \
+    --env SCRAP_MONITORING_VISUALIZER_TCP_HOST=127.0.0.1 \
+    --env SCRAP_MONITORING_VISUALIZER_TCP_PORT=8000 \
+    --env SCRAP_MONITORING_VISUALIZER_HTTP_HOST=127.0.0.1 \
+    --env SCRAP_MONITORING_VISUALIZER_HTTP_PORT=8000 \
     "${image}" live
 } 2>&1)"
 environment_status=$?
@@ -77,21 +77,21 @@ docker run "${runtime_options[@]}" \
   --mount "type=bind,source=${probe_root}/output,target=/output" \
   --entrypoint python \
   "${image}" \
-  -m scrap_monitoring_lidar_visualizer.dependency_audit \
+  -m scrap_monitoring_visualizer.dependency_audit \
   --output /output/dependency-inventory.json
 
 docker run "${runtime_options[@]}" \
   --mount "type=bind,source=${probe_root}/output,target=/output" \
   --entrypoint python \
   "${image}" \
-  -m scrap_monitoring_lidar_visualizer.rendering.probe \
+  -m scrap_monitoring_visualizer.rendering.probe \
   --output /output/scene
 
 docker run "${runtime_options[@]}" \
   --mount "type=bind,source=${probe_root}/output,target=/output" \
   --entrypoint python \
   "${image}" \
-  -m scrap_monitoring_lidar_visualizer.live_probe \
+  -m scrap_monitoring_visualizer.live_probe \
   --output /output/live
 
 test "$(jq -r '.display_present' "${probe_root}/output/probe/probe.json")" = "false"
@@ -137,7 +137,7 @@ benchmark_json="$(
   docker run "${runtime_options[@]}" \
     --entrypoint python \
     "${image}" \
-    -m scrap_monitoring_lidar_visualizer.runtime_probe \
+    -m scrap_monitoring_visualizer.runtime_probe \
     --output /tmp/benchmark \
     --grid-x 512 \
     --grid-y 512

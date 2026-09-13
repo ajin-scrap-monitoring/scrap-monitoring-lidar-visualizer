@@ -7,9 +7,9 @@ from dataclasses import dataclass, replace
 from queue import Empty, Full
 from typing import Any
 
-from scrap_monitoring_lidar_visualizer.contracts.models import Header, Observation
-from scrap_monitoring_lidar_visualizer.geometry import build_scene_geometry
-from scrap_monitoring_lidar_visualizer.preview import LatestFrameStore
+from scrap_monitoring_visualizer.contracts.models import Header, Observation
+from scrap_monitoring_visualizer.geometry import build_scene_geometry
+from scrap_monitoring_visualizer.preview import LatestFrameStore
 
 from .renderer import RenderConfig, render_scene
 
@@ -86,7 +86,7 @@ class LatestRenderWorker:
         self._process = context.Process(
             target=_worker_main,
             args=(self._requests, self._outcomes),
-            name="lidar-renderer",
+            name="visualizer-renderer",
         )
         self._frames = frames
         self._generation = 0

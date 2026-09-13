@@ -1,11 +1,11 @@
 import pytest
 
-from scrap_monitoring_lidar_visualizer.limits import (
+from scrap_monitoring_visualizer.limits import (
     MAX_FRAME_HEIGHT,
     MAX_FRAME_WIDTH,
     MAX_GRID_POINTS,
 )
-from scrap_monitoring_lidar_visualizer.runtime_probe import (
+from scrap_monitoring_visualizer.runtime_probe import (
     ProbeConfig,
     synthetic_surface,
 )

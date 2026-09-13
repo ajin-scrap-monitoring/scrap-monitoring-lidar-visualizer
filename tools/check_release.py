@@ -18,7 +18,7 @@ def project_version(root: Path) -> str:
     with (root / "pyproject.toml").open("rb") as source:
         pyproject_version = tomllib.load(source)["project"]["version"]
     module = ast.parse(
-        (root / "src/scrap_monitoring_lidar_visualizer/__init__.py").read_text(
+        (root / "src/scrap_monitoring_visualizer/__init__.py").read_text(
             encoding="utf-8"
         )
     )

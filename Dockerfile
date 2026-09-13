@@ -33,8 +33,8 @@ ARG BUILD_VERSION=1.0.0
 
 LABEL org.opencontainers.image.description="Headless 3D visualizer for Scrap Monitoring LiDAR observations" \
       org.opencontainers.image.revision="${BUILD_REVISION}" \
-      org.opencontainers.image.source="https://github.com/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer" \
-      org.opencontainers.image.title="Scrap Monitoring LiDAR Visualizer" \
+      org.opencontainers.image.source="https://github.com/ajin-scrap-monitoring/scrap-monitoring-visualizer" \
+      org.opencontainers.image.title="Scrap Monitoring Visualizer" \
       org.opencontainers.image.version="${BUILD_VERSION}"
 
 ENV HOME=/tmp \
@@ -52,5 +52,5 @@ STOPSIGNAL SIGTERM
 
 EXPOSE 17000/tcp 18000/tcp
 
-ENTRYPOINT ["lidar-visualizer"]
+ENTRYPOINT ["scrap-monitoring-visualizer"]
 CMD ["--help"]
