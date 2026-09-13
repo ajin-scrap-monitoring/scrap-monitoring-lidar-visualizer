@@ -12,60 +12,10 @@ filesystem을 read-only로 두고 `/tmp`와 기록 또는 영상 출력 volume�
 제공한다. Runtime probe는 `DISPLAY` 환경 변수, `/dev/dri` GPU device와 root 권한이 있으면
 실패한다.
 
-## Live 실행
+## 사용자 실행 절차
 
-TCP 수신과 HTTP preview를 함께 실행한다.
-
-```bash
-uv run lidar-visualizer live \
-  --tcp-host 127.0.0.1 \
-  --tcp-port 7000 \
-  --http-host 127.0.0.1 \
-  --http-port 8000
-```
-
-원본 기록을 활성화할 때는 출력 경로와 byte 및 record 한도를 모두 지정한다.
-
-```bash
-uv run lidar-visualizer live \
-  --tcp-host 127.0.0.1 \
-  --tcp-port 7000 \
-  --http-host 127.0.0.1 \
-  --http-port 8000 \
-  --record observations.ndjson \
-  --record-max-bytes 104857600 \
-  --record-max-records 100000
-```
-
-Browser는 `/`에서 화면, `/frame.png`에서 최신 frame, `/status`에서 수신 및 렌더링 상태를
-조회한다. HTTP 경계에는 인증과 TLS(Transport Layer Security)가 없으므로 제한된 개발
-network에서만 노출한다.
-
-## Replay 실행
-
-단일 실행 기록은 `--run-id` 없이 MP4로 출력할 수 있다. 여러 실행이 포함된 기록은
-`--run-id`를 지정한다.
-
-```bash
-uv run lidar-visualizer replay observations.jsonl \
-  --output replay.mp4 \
-  --start 10 \
-  --end 40 \
-  --time-scale 2 \
-  --fps 10
-```
-
-같은 HTTP 경계에서 기록을 재생한다.
-
-```bash
-uv run lidar-visualizer replay observations.jsonl \
-  --http-host 127.0.0.1 \
-  --http-port 8000 \
-  --duration 30
-```
-
-`--duration`과 `--time-scale`은 함께 지정하지 않는다. MP4는 기존 파일을 덮어쓰지 않으며
-같은 출력 directory의 부분 파일을 FFmpeg 및 ffprobe 검증 뒤 최종 경로에 연결한다.
+사용자 실행, 환경 변수 주입, Generator 연결, 기록과 MP4 생성 절차의 정본은
+[README](../README.md)다.
 
 ## 빌드와 검증
 
@@ -107,24 +57,7 @@ SHA-256 checksum, 설치 wheel의 계약 parsing, SLSA(Supply-chain Levels for S
 Artifacts) provenance와 SPDX(Software Package Data Exchange) 2.3 SBOM을 검증했다.
 Package는 Public이며 인증 정보가 없는 Docker 설정으로 digest image를 가져올 수 있다.
 
-현재 배포 image는 불변 digest로 실행한다.
-
-```bash
-docker run --rm \
-  --platform linux/amd64 \
-  --read-only \
-  --cap-drop ALL \
-  --security-opt no-new-privileges \
-  --tmpfs /tmp:rw,noexec,nosuid,size=64m \
-  --publish 7000:7000 \
-  --publish 8000:8000 \
-  ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:ca1a46adc8e0a4bea927c212f175e864d153aba48a1a14eef87cb070f16b3139 \
-  live \
-  --tcp-host 0.0.0.0 \
-  --tcp-port 7000 \
-  --http-host 0.0.0.0 \
-  --http-port 8000
-```
+현재 배포 image의 불변 참조는 Release asset `oci-image.txt`에 있다.
 
 ## 자원 기준
 

@@ -46,6 +46,28 @@ cli_help="$(docker run "${runtime_options[@]}" "${image}" --help)"
 readonly cli_help
 grep -q '{live,replay}' <<<"${cli_help}"
 
+set +e
+environment_error="$({
+  docker run "${runtime_options[@]}" \
+    --env LIDAR_VISUALIZER_TCP_HOST=127.0.0.1 \
+    --env LIDAR_VISUALIZER_TCP_PORT=8000 \
+    --env LIDAR_VISUALIZER_HTTP_HOST=127.0.0.1 \
+    --env LIDAR_VISUALIZER_HTTP_PORT=8000 \
+    "${image}" live
+} 2>&1)"
+environment_status=$?
+set -e
+readonly environment_error environment_status
+test "${environment_status}" -eq 2
+grep -q 'TCP and HTTP endpoints must be different' <<<"${environment_error}"
+
+docker run "${runtime_options[@]}" \
+  --mount "type=bind,source=${probe_root}/output,target=/output" \
+  --env LIDAR_VISUALIZER_OUTPUT_PATH=/output/environment-replay.mp4 \
+  "${image}" \
+  replay /app/contracts/observation/v1/fixtures/observation.v1.jsonl
+test -s "${probe_root}/output/environment-replay.mp4"
+
 docker run "${runtime_options[@]}" \
   --mount "type=bind,source=${probe_root}/output,target=/output" \
   --entrypoint python \
