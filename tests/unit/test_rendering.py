@@ -1,7 +1,9 @@
 from dataclasses import replace
 from pathlib import Path
+from typing import cast
 
 import pytest
+import pyvista as pv
 
 from scrap_monitoring_lidar_visualizer.contracts import (
     ContractParser,
@@ -9,6 +11,10 @@ from scrap_monitoring_lidar_visualizer.contracts import (
     Observation,
 )
 from scrap_monitoring_lidar_visualizer.rendering import RenderConfig, describe_scene
+from scrap_monitoring_lidar_visualizer.rendering.renderer import (
+    _apply_camera,
+    _sensor_rotation_axis,
+)
 
 CONTRACT_ROOT = Path("contracts/observation/v1")
 
@@ -44,6 +50,41 @@ def test_render_config_rejects_invalid_dimensions(config: RenderConfig) -> None:
 def test_render_config_accepts_both_cameras() -> None:
     RenderConfig(camera="isometric").validate()
     RenderConfig(camera="top").validate()
+
+
+def test_camera_uses_parallel_projection() -> None:
+    class PlotterStub:
+        def __init__(self) -> None:
+            self.camera_position: object = None
+            self.reset = False
+            self.parallel_projection = False
+
+        def reset_camera(self) -> None:
+            self.reset = True
+
+        def enable_parallel_projection(self) -> None:
+            self.parallel_projection = True
+
+    camera_position = (
+        (1.0, -1.0, 1.0),
+        (0.0, 0.0, 0.0),
+        (0.0, 0.0, 1.0),
+    )
+    plotter = PlotterStub()
+
+    _apply_camera(cast(pv.Plotter, plotter), camera_position)
+
+    assert plotter.reset
+    assert plotter.camera_position == camera_position
+    assert plotter.parallel_projection
+
+
+def test_sensor_marker_uses_right_handed_rotation_axis(
+    records: tuple[Header, Observation],
+) -> None:
+    header, _ = records
+
+    assert _sensor_rotation_axis(header.scene.sensors[0]) == (0.0, -1.0, 0.0)
 
 
 def test_scene_description_contains_required_overlay_and_camera(

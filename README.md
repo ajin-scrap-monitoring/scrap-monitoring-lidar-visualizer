@@ -112,7 +112,7 @@ scripts/check-headless-container.sh
 
 ## 배포
 
-Live Container는 TCP 7000에서 관찰 데이터를 받고 HTTP 8000에서 미리보기를 제공한다.
+Visualizer Container는 TCP 17000에서 관찰 데이터를 받고 HTTP 18000에서 미리보기를 제공한다.
 실제 사설 주소와 운영 설정은 이미지에 포함하지 않고 배포 환경에서 주입한다. 다음 명령은
 기록 기능을 사용하지 않는 기본 배포다. Repository를 Checkout한 배포 host에서 공개 예제를
 Git이 추적하지 않는 `.env`로 복사한다.
@@ -142,8 +142,8 @@ docker run --detach \
   --tmpfs /tmp:rw,noexec,nosuid,size=64m \
   --log-opt max-size=10m \
   --log-opt max-file=3 \
-  --publish 7000:7000 \
-  --publish 8000:8000 \
+  --publish 17000:17000 \
+  --publish 18000:18000 \
   --env-file .env \
   "$IMAGE_REF" \
   live
@@ -155,7 +155,7 @@ Generator에는 Visualizer server에서 공개한 TCP endpoint를 지정한다.
 uv run --locked scrap-monitoring-lidar-generator \
   --config /path/to/generator.v1.json \
   --observation-host <visualizer-host> \
-  --observation-port 7000
+  --observation-port 17000
 ```
 
 Generator Container에서도 `<visualizer-host>`는 Container 내부에서 해석되고 접근 가능한
@@ -167,11 +167,11 @@ DNS(Domain Name System) 이름 또는 IP 주소여야 한다. 실제 주소는 P
 ```bash
 docker container ps --filter name=scrap-monitoring-lidar-visualizer
 docker container logs scrap-monitoring-lidar-visualizer
-curl --fail http://<visualizer-host>:8000/status
-curl --fail --output frame.png http://<visualizer-host>:8000/frame.png
+curl --fail http://<visualizer-host>:18000/status
+curl --fail --output frame.png http://<visualizer-host>:18000/frame.png
 ```
 
-Browser에서 `http://<visualizer-host>:8000/`을 열면 최신 프레임과 상태를 확인할 수 있다.
+Browser에서 `http://<visualizer-host>:18000/`을 열면 최신 프레임과 상태를 확인할 수 있다.
 첫 유효 관찰 전에는 `/frame.png`가 204를 반환한다. `/status`의 `received_sequence`와
 `rendered_sequence`가 값으로 채워지면 수신과 렌더링이 완료된 상태다.
 
@@ -197,8 +197,8 @@ docker run --detach \
   --tmpfs /tmp:rw,noexec,nosuid,size=64m \
   --log-opt max-size=10m \
   --log-opt max-file=3 \
-  --publish 7000:7000 \
-  --publish 8000:8000 \
+  --publish 17000:17000 \
+  --publish 18000:18000 \
   --mount type=bind,src=/path/to/visualizer-recordings,dst=/data \
   --env-file .env \
   "$IMAGE_REF" \
@@ -226,7 +226,7 @@ docker run --rm \
   replay /input/observations.ndjson
 ```
 
-HTTP endpoint에는 인증과 TLS(Transport Layer Security)가 없다. TCP 7000, HTTP 8000과 기록
+HTTP endpoint에는 인증과 TLS(Transport Layer Security)가 없다. TCP 17000, HTTP 18000과 기록
 directory는 접근이 제한된 개발 network에서만 제공한다.
 
 ## 문서

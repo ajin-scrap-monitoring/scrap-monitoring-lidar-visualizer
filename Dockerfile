@@ -30,7 +30,7 @@ COPY --from=builder --chown=visualizer:visualizer /app /app
 COPY --chown=visualizer:visualizer THIRD_PARTY_NOTICES.md /app/THIRD_PARTY_NOTICES.md
 
 ARG BUILD_REVISION=unknown
-ARG BUILD_VERSION=0.2.0
+ARG BUILD_VERSION=0.3.0
 
 LABEL org.opencontainers.image.description="Headless 3D visualizer for Scrap Monitoring LiDAR observations" \
       org.opencontainers.image.revision="${BUILD_REVISION}" \
@@ -51,7 +51,7 @@ WORKDIR /app
 USER 10001:10001
 STOPSIGNAL SIGTERM
 
-EXPOSE 7000/tcp 8000/tcp
+EXPOSE 17000/tcp 18000/tcp
 
 ENTRYPOINT ["lidar-visualizer"]
 CMD ["--help"]

@@ -5,7 +5,7 @@
 현재 package는 TCP 수신, 제한된 기록, 기록 재생, 렌더링 자식 process, HTTP preview와
 H.264 MP4 출력을 연결하는 `lidar-visualizer` CLI를 제공한다. Container 검증은 실제
 loopback TCP 입력, live 및 replay HTTP 응답, 제품 PNG와 ffprobe 영상 구조를 확인한다.
-Image entrypoint는 `lidar-visualizer`이고 TCP 7000과 HTTP 8000 port를 선언한다.
+Image entrypoint는 `lidar-visualizer`이고 TCP 17000과 HTTP 18000 port를 선언한다.
 
 Container는 Linux AMD64에서 UID와 GID 10001인 비root 사용자로 실행한다. 운영 실행은 root
 filesystem을 read-only로 두고 `/tmp`와 기록 또는 영상 출력 volume만 writable 경로로
