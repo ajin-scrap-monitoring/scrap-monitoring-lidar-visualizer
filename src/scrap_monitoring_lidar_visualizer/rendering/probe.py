@@ -37,8 +37,7 @@ def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:
             "contract fixture must contain one header and one observation"
         )
     geometry = build_scene_geometry(records[0], records[1])
-    result = render_scene(
-        output_dir / "scene.png",
+    png, result = render_scene(
         records[0],
         records[1],
         geometry,
@@ -46,8 +45,7 @@ def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:
         connected=True,
         missing_sequences=0,
     )
-    top_result = render_scene(
-        output_dir / "scene-top.png",
+    top_png, _ = render_scene(
         records[0],
         records[1],
         geometry,
@@ -55,14 +53,16 @@ def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:
         connected=False,
         missing_sequences=2,
     )
+    (output_dir / "scene.png").write_bytes(png)
+    (output_dir / "scene-top.png").write_bytes(top_png)
     payload = {
         **asdict(result),
-        "path": result.path.name,
+        "path": "scene.png",
         "euid": os.geteuid(),
         "display_present": "DISPLAY" in os.environ,
         "floor_faces": len(geometry.floor.faces),
         "wall_faces": len(geometry.walls.faces),
-        "top_path": top_result.path.name,
+        "top_path": "scene-top.png",
     }
     (output_dir / "scene.json").write_text(
         json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"

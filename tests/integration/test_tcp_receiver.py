@@ -7,7 +7,6 @@ from typing import Any
 
 from scrap_monitoring_lidar_visualizer.contracts import ContractParser
 from scrap_monitoring_lidar_visualizer.receiver import ObservationReceiver
-from scrap_monitoring_lidar_visualizer.recording import AsyncRecordWriter
 
 CONTRACT_ROOT = Path("contracts/observation/v1")
 FIXTURE_PATH = CONTRACT_ROOT / "fixtures/observation.v1.jsonl"
@@ -46,19 +45,14 @@ def _observation(sequence: int, elapsed_s: float) -> bytes:
     return json.dumps(document, separators=(",", ":")).encode() + b"\n"
 
 
-def test_receiver_handles_packet_boundaries_without_response(tmp_path: Path) -> None:
+def test_receiver_handles_packet_boundaries_without_response() -> None:
     async def exercise() -> None:
-        path = tmp_path / "received.jsonl"
-        recorder = AsyncRecordWriter(path, max_records=10, max_bytes=1_000_000)
-        await recorder.start()
-        receiver = ObservationReceiver(ContractParser(CONTRACT_ROOT), recorder=recorder)
+        receiver = ObservationReceiver(ContractParser(CONTRACT_ROOT))
         server, host, port = await _start(receiver)
         header, observation = _fixture_lines()
         payload = header + observation
 
         response = await _send(host, port, (payload[:11], payload[11:73], payload[73:]))
-        await asyncio.sleep(0)
-        snapshot = await recorder.close()
         server.close()
         await server.wait_closed()
 
@@ -66,8 +60,6 @@ def test_receiver_handles_packet_boundaries_without_response(tmp_path: Path) -> 
         assert receiver.snapshot.records_accepted == 2
         assert receiver.state.observation is not None
         assert receiver.state.connected is False
-        assert path.read_bytes() == payload
-        assert snapshot.written_records == 2
 
     asyncio.run(exercise())
 
@@ -88,30 +80,6 @@ def test_receiver_rejects_invalid_record_and_keeps_connection() -> None:
         assert receiver.state.observation is not None
         assert receiver.state.observation.sequence == 2
         assert receiver.state.missing_sequences == 1
-
-    asyncio.run(exercise())
-
-
-def test_recording_limit_does_not_stop_live_state(tmp_path: Path) -> None:
-    async def exercise() -> None:
-        recorder = AsyncRecordWriter(
-            tmp_path / "prefix.jsonl", max_records=1, max_bytes=1_000_000
-        )
-        await recorder.start()
-        receiver = ObservationReceiver(ContractParser(CONTRACT_ROOT), recorder=recorder)
-        server, host, port = await _start(receiver)
-        header, observation = _fixture_lines()
-
-        await _send(host, port, (header + observation,))
-        snapshot = await recorder.close()
-        server.close()
-        await server.wait_closed()
-
-        assert receiver.state.observation is not None
-        assert receiver.state.observation.sequence == 1
-        assert receiver.snapshot.records_accepted == 2
-        assert snapshot.reason == "limit_reached"
-        assert (tmp_path / "prefix.jsonl").read_bytes() == header
 
     asyncio.run(exercise())
 

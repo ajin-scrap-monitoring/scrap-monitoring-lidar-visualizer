@@ -3,20 +3,22 @@
 from __future__ import annotations
 
 import asyncio
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any, Literal
 
 import uvicorn
 
 from scrap_monitoring_lidar_visualizer.contracts import ContractParser
+from scrap_monitoring_lidar_visualizer.limits import (
+    DEFAULT_FRAME_HEIGHT,
+    DEFAULT_FRAME_WIDTH,
+)
 from scrap_monitoring_lidar_visualizer.preview import (
     LatestFrameStore,
     create_preview_app,
 )
 from scrap_monitoring_lidar_visualizer.receiver import ObservationReceiver
-from scrap_monitoring_lidar_visualizer.recording import AsyncRecordWriter
 from scrap_monitoring_lidar_visualizer.rendering import RenderConfig
 from scrap_monitoring_lidar_visualizer.rendering.worker import (
     LatestRenderWorker,
@@ -32,11 +34,8 @@ class LiveConfig:
     http_host: str
     http_port: int
     camera: Literal["isometric", "top"] = "isometric"
-    width: int = 640
-    height: int = 360
-    record_path: Path | None = None
-    record_max_records: int | None = None
-    record_max_bytes: int | None = None
+    width: int = DEFAULT_FRAME_WIDTH
+    height: int = DEFAULT_FRAME_HEIGHT
 
     def validate(self) -> None:
         if not self.tcp_host or not self.http_host:
@@ -48,21 +47,6 @@ class LiveConfig:
         RenderConfig(
             width=self.width, height=self.height, camera=self.camera
         ).validate()
-        recording_values = (
-            self.record_path,
-            self.record_max_records,
-            self.record_max_bytes,
-        )
-        if any(value is not None for value in recording_values) and not all(
-            value is not None for value in recording_values
-        ):
-            raise ValueError(
-                "record path, max records and max bytes must be set together"
-            )
-        if self.record_max_records is not None and self.record_max_records <= 0:
-            raise ValueError("record max records must be positive")
-        if self.record_max_bytes is not None and self.record_max_bytes <= 0:
-            raise ValueError("record max bytes must be positive")
 
 
 class LiveCoordinator:
@@ -71,12 +55,10 @@ class LiveCoordinator:
         frames: LatestFrameStore,
         worker: LatestRenderWorker,
         render_config: RenderConfig,
-        recorder: AsyncRecordWriter | None,
     ) -> None:
         self._frames = frames
         self._worker = worker
         self._render_config = render_config
-        self._recorder = recorder
         self._receiver: ObservationReceiver | None = None
         self._state = ExecutionState()
         self._last_received_sequence: int | None = None
@@ -113,7 +95,6 @@ class LiveCoordinator:
         receiver_snapshot = (
             self._receiver.snapshot if self._receiver is not None else None
         )
-        recording = self._recorder.snapshot if self._recorder is not None else None
         return {
             "connected": self._state.connected,
             "run_id": self._state.header.run_id
@@ -135,40 +116,21 @@ class LiveCoordinator:
                 if receiver_snapshot is not None
                 else 0
             ),
-            "recording": asdict(recording) if recording is not None else None,
             "render_error": self._worker.last_error,
         }
 
 
 async def run_live(config: LiveConfig) -> int:
     config.validate()
-    recorder: AsyncRecordWriter | None = None
-    if config.record_path is not None:
-        assert config.record_max_records is not None
-        assert config.record_max_bytes is not None
-        recorder = AsyncRecordWriter(
-            config.record_path,
-            max_records=config.record_max_records,
-            max_bytes=config.record_max_bytes,
-        )
-        await recorder.start()
     frames = LatestFrameStore()
     worker = LatestRenderWorker(frames)
-    try:
-        worker.start()
-    except Exception:
-        if recorder is not None:
-            await recorder.close()
-        raise
+    worker.start()
     coordinator = LiveCoordinator(
         frames,
         worker,
         RenderConfig(width=config.width, height=config.height, camera=config.camera),
-        recorder,
     )
-    receiver = ObservationReceiver(
-        ContractParser(), recorder=recorder, on_state=coordinator.state_changed
-    )
+    receiver = ObservationReceiver(ContractParser(), on_state=coordinator.state_changed)
     coordinator.bind_receiver(receiver)
     try:
         tcp_server = await asyncio.start_server(
@@ -176,8 +138,6 @@ async def run_live(config: LiveConfig) -> int:
         )
     except Exception:
         worker.close()
-        if recorder is not None:
-            await recorder.close()
         raise
     app = create_preview_app(frames, coordinator.status)
     uvicorn_server = uvicorn.Server(
@@ -197,7 +157,6 @@ async def run_live(config: LiveConfig) -> int:
             await asyncio.sleep(0.02)
 
     poll_task = asyncio.create_task(poll_renderer())
-    exit_code = 0
     try:
         async with tcp_server:
             await uvicorn_server.serve()
@@ -208,8 +167,4 @@ async def run_live(config: LiveConfig) -> int:
         await poll_task
         worker.poll()
         worker.close()
-        if recorder is not None:
-            recording = await recorder.close()
-            if recording.reason == "write_error":
-                exit_code = 1
-    return exit_code
+    return 0

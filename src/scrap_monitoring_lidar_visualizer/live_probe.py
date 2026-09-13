@@ -45,7 +45,7 @@ async def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:
     frames = LatestFrameStore()
     worker = LatestRenderWorker(frames)
     worker.start()
-    coordinator = LiveCoordinator(frames, worker, RenderConfig(), None)
+    coordinator = LiveCoordinator(frames, worker, RenderConfig())
     receiver = ObservationReceiver(
         ContractParser(contract_root), on_state=coordinator.state_changed
     )
@@ -118,6 +118,7 @@ async def run_probe(output_dir: Path, contract_root: Path) -> dict[str, object]:
             "connected": status_payload["connected"],
             "received_sequence": status_payload["received_sequence"],
             "rendered_sequence": status_payload["rendered_sequence"],
+            "recording_present": "recording" in status_payload,
         }
         (output_dir / "live.json").write_text(
             json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"

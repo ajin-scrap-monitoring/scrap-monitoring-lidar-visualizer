@@ -13,6 +13,8 @@ from scrap_monitoring_lidar_visualizer.contracts import (
 from scrap_monitoring_lidar_visualizer.geometry import build_scene_geometry
 from scrap_monitoring_lidar_visualizer.rendering import RenderConfig, describe_scene
 from scrap_monitoring_lidar_visualizer.rendering.renderer import (
+    HEIGHT_LEGEND_TITLE,
+    HEIGHT_SCALAR_BAR_ARGS,
     HEIGHT_SCALAR_NAME,
     _apply_camera,
     _height_poly_data,
@@ -102,6 +104,16 @@ def test_height_mesh_uses_absolute_vertex_z_values(
     ]
 
 
+def test_height_legend_reserves_space_between_title_and_scale() -> None:
+    assert HEIGHT_LEGEND_TITLE == "Surface height (m)"
+    assert HEIGHT_SCALAR_BAR_ARGS["title"] == ""
+    assert (
+        float(HEIGHT_SCALAR_BAR_ARGS["position_y"])
+        + float(HEIGHT_SCALAR_BAR_ARGS["height"])
+        <= 0.75
+    )
+
+
 def test_scene_description_contains_required_overlay_and_camera(
     records: tuple[Header, Observation],
 ) -> None:
@@ -119,7 +131,6 @@ def test_scene_description_contains_required_overlay_and_camera(
         config=RenderConfig(camera="top"),
         connected=False,
         missing_sequences=3,
-        connection_label="replay",
     )
 
     assert isometric.camera_position != top.camera_position
@@ -127,7 +138,7 @@ def test_scene_description_contains_required_overlay_and_camera(
     assert "sequence: 1" in isometric.overlay
     assert "connection: connected" in isometric.overlay
     assert "missing_sequences: 3" in top.overlay
-    assert "connection: replay" in top.overlay
+    assert "connection: disconnected" in top.overlay
 
 
 def test_collecting_scene_has_no_active_inlet(

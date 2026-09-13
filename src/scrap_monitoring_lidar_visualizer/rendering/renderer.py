@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from pathlib import Path
+from io import BytesIO
 from typing import Literal
 
 import numpy as np
 import pyvista as pv
+from PIL import Image
+from pyvista.plotting._typing import ScalarBarArgs
 
 from scrap_monitoring_lidar_visualizer.contracts.models import (
     Header,
@@ -27,12 +29,25 @@ BACKGROUND_COLOR = "#E8EEF4"
 FLOOR_COLOR = "#BCC8D6"
 WALL_COLOR = "#7890A8"
 MESH_EDGE_COLOR = "#454545"
+OVERLAY_COLOR = "#111827"
 HEIGHT_COLOR_MAP: Literal["YlOrRd"] = "YlOrRd"
 HEIGHT_SCALAR_NAME = "height_m"
+HEIGHT_LEGEND_TITLE = "Surface height (m)"
+HEIGHT_SCALAR_BAR_ARGS: ScalarBarArgs = {
+    "title": "",
+    "color": OVERLAY_COLOR,
+    "fmt": "%.2f",
+    "n_labels": 5,
+    "label_font_size": 12,
+    "vertical": True,
+    "position_x": 0.9,
+    "position_y": 0.15,
+    "width": 0.045,
+    "height": 0.58,
+}
 SENSOR_COLOR = "#1677B8"
 ACTIVE_INLET_COLOR = "#C62828"
 INACTIVE_INLET_COLOR = "#2E7D32"
-OVERLAY_COLOR = "#111827"
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,7 +65,6 @@ class RenderConfig:
 
 @dataclass(frozen=True, slots=True)
 class RenderResult:
-    path: Path
     width: int
     height: int
     render_window: str
@@ -142,10 +156,9 @@ def _overlay(
     *,
     connected: bool,
     missing_sequences: int,
-    connection_label: str | None,
 ) -> str:
     scenario = observation.scenario
-    connection = connection_label or ("connected" if connected else "disconnected")
+    connection = "connected" if connected else "disconnected"
     return "\n".join(
         (
             f"run: {observation.run_id}",
@@ -167,7 +180,6 @@ def describe_scene(
     config: RenderConfig,
     connected: bool,
     missing_sequences: int,
-    connection_label: str | None = None,
 ) -> SceneDescription:
     config.validate()
     active_inlet = (
@@ -181,14 +193,12 @@ def describe_scene(
             observation,
             connected=connected,
             missing_sequences=missing_sequences,
-            connection_label=connection_label,
         ),
         active_inlet_index=active_inlet,
     )
 
 
 def render_scene(
-    output_path: Path,
     header: Header,
     observation: Observation,
     geometry: SceneGeometry,
@@ -196,8 +206,7 @@ def render_scene(
     config: RenderConfig | None = None,
     connected: bool,
     missing_sequences: int,
-    connection_label: str | None = None,
-) -> RenderResult:
+) -> tuple[bytes, RenderResult]:
     config = config or RenderConfig()
     config.validate()
     description = describe_scene(
@@ -206,12 +215,7 @@ def render_scene(
         config=config,
         connected=connected,
         missing_sequences=missing_sequences,
-        connection_label=connection_label,
     )
-    if output_path.exists():
-        raise FileExistsError(output_path)
-    if not output_path.parent.is_dir():
-        raise ValueError("frame parent directory does not exist")
     plotter = pv.Plotter(off_screen=True, window_size=[config.width, config.height])
     plotter.set_background(BACKGROUND_COLOR)  # type: ignore[arg-type]
     try:
@@ -238,20 +242,15 @@ def render_scene(
             cmap=HEIGHT_COLOR_MAP,
             clim=(header.scene.floor_z_m, header.scene.top_z_m),
             edge_color=MESH_EDGE_COLOR,
-            smooth_shading=False,
+            smooth_shading=True,
             show_edges=True,
-            scalar_bar_args={
-                "title": "Surface height (m)",
-                "color": OVERLAY_COLOR,
-                "fmt": "%.2f",
-                "title_font_size": 12,
-                "label_font_size": 10,
-                "vertical": True,
-                "position_x": 0.88,
-                "position_y": 0.2,
-                "width": 0.06,
-                "height": 0.55,
-            },
+            scalar_bar_args=HEIGHT_SCALAR_BAR_ARGS,
+        )
+        plotter.add_text(
+            HEIGHT_LEGEND_TITLE,
+            position="upper_right",
+            font_size=10,
+            color=OVERLAY_COLOR,
         )
         x_values = tuple(point[0] for point in header.scene.boundary_xy_m)
         y_values = tuple(point[1] for point in header.scene.boundary_xy_m)
@@ -294,13 +293,14 @@ def render_scene(
         render_window = type(plotter.render_window).__name__
         if render_window != EXPECTED_RENDER_WINDOW:
             raise RuntimeError(f"unexpected render window: {render_window}")
-        image = plotter.screenshot(str(output_path), return_img=True)
+        image = plotter.screenshot(return_img=True)
         if image is None or image.shape[:2] != (config.height, config.width):
             raise RuntimeError("renderer returned an unexpected frame shape")
     finally:
         plotter.close()
-    return RenderResult(
-        path=output_path,
+    output = BytesIO()
+    Image.fromarray(image).save(output, format="PNG")
+    return output.getvalue(), RenderResult(
         width=config.width,
         height=config.height,
         render_window=render_window,
