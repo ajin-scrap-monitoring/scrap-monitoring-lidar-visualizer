@@ -50,8 +50,8 @@ digest를 전체 Container 검사에 사용한다. Package 공개 범위를 확�
 archive, image digest, release metadata, 의존성 inventory, 고지와 SHA-256 checksum을 draft
 Release에 올리고 최종 게시한다.
 
-[v0.5.0 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-visualizer/releases/tag/v0.5.0)는
-source commit `920723d38fd2ffc038b73e702ff2f7580b8daceb`에서 생성된 현재 최신 불변
+[v1.0.0 Release](https://github.com/ajin-scrap-monitoring/scrap-monitoring-visualizer/releases/tag/v1.0.0)는
+source commit `7f87118e4740c36ab8fbbf7f252a4349811da295`에서 생성된 현재 최신 불변
 Release다. Release asset 7개의 SHA-256 checksum, wheel version, SLSA(Supply-chain Levels
 for Software Artifacts) provenance와 SPDX(Software Package Data Exchange) 2.3 SBOM을
 검증했다. Package는 Public이며 인증 정보가 없는 Docker 설정으로 digest image를 가져올 수
@@ -60,7 +60,7 @@ for Software Artifacts) provenance와 SPDX(Software Package Data Exchange) 2.3 S
 현재 배포 image의 불변 참조는 다음과 같다.
 
 ```text
-ghcr.io/ajin-scrap-monitoring/scrap-monitoring-lidar-visualizer@sha256:d21551b5a19054bc3f0d113d416034f126daf9c19d8e0c9529cfebf1c6a0571e
+ghcr.io/ajin-scrap-monitoring/scrap-monitoring-visualizer@sha256:79ff197f3e6faf47ad7cfff853b3beaaeb3ffac7d16ea9cce500bc2b91855d7c
 ```
 
 ## 자원 기준
