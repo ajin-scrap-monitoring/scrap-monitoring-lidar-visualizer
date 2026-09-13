@@ -23,6 +23,15 @@ from scrap_monitoring_lidar_visualizer.limits import (
 )
 
 EXPECTED_RENDER_WINDOW = "vtkOSOpenGLRenderWindow"
+BACKGROUND_COLOR = "#E8EEF4"
+FLOOR_COLOR = "#BCC8D6"
+WALL_COLOR = "#7890A8"
+MESH_EDGE_COLOR = "#334155"
+SURFACE_COLOR = "#D39B42"
+SENSOR_COLOR = "#1677B8"
+ACTIVE_INLET_COLOR = "#C62828"
+INACTIVE_INLET_COLOR = "#2E7D32"
+OVERLAY_COLOR = "#111827"
 
 
 @dataclass(frozen=True, slots=True)
@@ -193,15 +202,20 @@ def render_scene(
     if not output_path.parent.is_dir():
         raise ValueError("frame parent directory does not exist")
     plotter = pv.Plotter(off_screen=True, window_size=[config.width, config.height])
-    plotter.set_background("#101820")  # type: ignore[arg-type]
+    plotter.set_background(BACKGROUND_COLOR)  # type: ignore[arg-type]
     try:
-        plotter.add_mesh(_poly_data(geometry.floor), color="#313A46")
+        plotter.add_mesh(_poly_data(geometry.floor), color=FLOOR_COLOR)
         plotter.add_mesh(
-            _poly_data(geometry.walls), color="#536273", opacity=0.35, show_edges=True
+            _poly_data(geometry.walls),
+            color=WALL_COLOR,
+            edge_color=MESH_EDGE_COLOR,
+            opacity=0.3,
+            show_edges=True,
         )
         plotter.add_mesh(
             _poly_data(geometry.surface),
-            color="#D6A85F",
+            color=SURFACE_COLOR,
+            edge_color=MESH_EDGE_COLOR,
             smooth_shading=False,
             show_edges=True,
         )
@@ -217,10 +231,14 @@ def render_scene(
                     direction=_sensor_rotation_axis(sensor),
                     scale=0.2 * marker_scale,
                 ),
-                color="#61AFEF",
+                color=SENSOR_COLOR,
             )
         for index, inlet in enumerate(header.scene.inlet_positions_xy_m):
-            color = "#E06C75" if index == description.active_inlet_index else "#98C379"
+            color = (
+                ACTIVE_INLET_COLOR
+                if index == description.active_inlet_index
+                else INACTIVE_INLET_COLOR
+            )
             plotter.add_mesh(
                 pv.Sphere(
                     radius=0.03 * marker_scale,
@@ -232,7 +250,7 @@ def render_scene(
             description.overlay,
             position="upper_left",
             font_size=10,
-            color="#F1F5F9",
+            color=OVERLAY_COLOR,
         )
         _apply_camera(plotter, description.camera_position)
         parallel_projection = bool(plotter.camera.parallel_projection)
